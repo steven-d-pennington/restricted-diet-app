@@ -1,0 +1,293 @@
+/* NativeWind Global Styles */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom CSS Variables for theming */
+:root {
+  /* Safety Colors */
+  --color-safety-safe: 34 197 94;      /* safety-safe-500 */
+  --color-safety-danger: 239 68 68;    /* safety-danger-500 */
+  --color-safety-caution: 245 158 11;  /* safety-caution-500 */
+  --color-safety-unknown: 100 116 139; /* safety-unknown-500 */
+  
+  /* Semantic Colors */
+  --color-primary: 14 165 233;         /* primary-500 */
+  --color-success: 34 197 94;          /* success-500 */
+  --color-warning: 245 158 11;         /* warning-500 */
+  --color-error: 239 68 68;            /* error-500 */
+  --color-info: 59 130 246;            /* info-500 */
+  
+  /* Background Colors */
+  --color-background: 255 255 255;     /* white */
+  --color-surface: 248 250 252;        /* slate-50 */
+  --color-card: 255 255 255;           /* white */
+  
+  /* Text Colors */
+  --color-text-primary: 15 23 42;      /* slate-900 */
+  --color-text-secondary: 71 85 105;   /* slate-600 */
+  --color-text-tertiary: 148 163 184;  /* slate-400 */
+  
+  /* Medical Context Colors */
+  --color-medical-prescription: 99 102 241;  /* indigo-500 */
+  --color-medical-otc: 139 92 246;           /* violet-500 */
+  --color-medical-supplement: 6 182 212;     /* cyan-500 */
+  --color-medical-natural: 16 185 129;       /* emerald-500 */
+}
+
+/* Web-specific styles (will be ignored on React Native) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Dark mode adjustments for web */
+    --color-background: 15 23 42;       /* slate-900 */
+    --color-surface: 30 41 59;          /* slate-800 */
+    --color-card: 51 65 85;             /* slate-700 */
+    --color-text-primary: 248 250 252;  /* slate-50 */
+    --color-text-secondary: 203 213 225; /* slate-300 */
+    --color-text-tertiary: 148 163 184;  /* slate-400 */
+  }
+}
+
+/* Base layer customizations */
+@layer base {
+  /* Ensure proper box-sizing for web */
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+  
+  /* Root element styling */
+  html {
+    -webkit-text-size-adjust: 100%;
+    tab-size: 4;
+  }
+  
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.5;
+    margin: 0;
+    background-color: rgb(var(--color-background));
+    color: rgb(var(--color-text-primary));
+  }
+  
+  /* Focus styles for accessibility */
+  :focus-visible {
+    outline: 2px solid rgb(var(--color-primary));
+    outline-offset: 2px;
+  }
+  
+  /* Remove default button styles */
+  button {
+    font-family: inherit;
+  }
+  
+  /* Input and form element styling */
+  input, textarea, select {
+    font-family: inherit;
+  }
+}
+
+/* Component layer for reusable patterns */
+@layer components {
+  /* Safety Status Cards */
+  .safety-card {
+    @apply medical-card border-2;
+  }
+  
+  .safety-card-safe {
+    @apply safety-card border-safety-safe-200 bg-safety-safe-50;
+  }
+  
+  .safety-card-danger {
+    @apply safety-card border-safety-danger-200 bg-safety-danger-50;
+  }
+  
+  .safety-card-caution {
+    @apply safety-card border-safety-caution-200 bg-safety-caution-50;
+  }
+  
+  .safety-card-unknown {
+    @apply safety-card border-safety-unknown-200 bg-safety-unknown-50;
+  }
+  
+  /* Button Components */
+  .btn {
+    @apply touch-target font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
+  }
+  
+  .btn-primary {
+    @apply btn bg-primary-500 text-white hover:bg-primary-600 focus:ring-primary-500;
+  }
+  
+  .btn-secondary {
+    @apply btn bg-neutral-100 text-neutral-900 hover:bg-neutral-200 focus:ring-neutral-500;
+  }
+  
+  .btn-success {
+    @apply btn bg-safety-safe-500 text-white hover:bg-safety-safe-600 focus:ring-safety-safe-500;
+  }
+  
+  .btn-danger {
+    @apply btn bg-safety-danger-500 text-white hover:bg-safety-danger-600 focus:ring-safety-danger-500;
+  }
+  
+  .btn-caution {
+    @apply btn bg-safety-caution-500 text-white hover:bg-safety-caution-600 focus:ring-safety-caution-500;
+  }
+  
+  /* Input Components */
+  .input {
+    @apply w-full px-3 py-2 border border-neutral-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500;
+  }
+  
+  .input-error {
+    @apply input border-safety-danger-300 focus:ring-safety-danger-500 focus:border-safety-danger-500;
+  }
+  
+  /* Medical Information Cards */
+  .medical-info-card {
+    @apply medical-card;
+  }
+  
+  .prescription-card {
+    @apply medical-info-card border-l-4 border-l-medical-prescription;
+  }
+  
+  .otc-card {
+    @apply medical-info-card border-l-4 border-l-medical-otc;
+  }
+  
+  .supplement-card {
+    @apply medical-info-card border-l-4 border-l-medical-supplement;
+  }
+  
+  .natural-card {
+    @apply medical-info-card border-l-4 border-l-medical-natural;
+  }
+  
+  /* Alert/Notification Components */
+  .alert {
+    @apply p-4 rounded-lg border;
+  }
+  
+  .alert-info {
+    @apply alert bg-info-50 border-info-200 text-info-800;
+  }
+  
+  .alert-success {
+    @apply alert bg-safety-safe-50 border-safety-safe-200 text-safety-safe-800;
+  }
+  
+  .alert-warning {
+    @apply alert bg-safety-caution-50 border-safety-caution-200 text-safety-caution-800;
+  }
+  
+  .alert-error {
+    @apply alert bg-safety-danger-50 border-safety-danger-200 text-safety-danger-800;
+  }
+  
+  /* Loading States */
+  .skeleton {
+    @apply animate-pulse bg-neutral-200 rounded;
+  }
+  
+  /* Navigation Components */
+  .tab-bar {
+    @apply bg-white border-t border-neutral-200;
+  }
+  
+  .tab-item {
+    @apply flex-1 py-2 px-1 text-center;
+  }
+  
+  .tab-item-active {
+    @apply tab-item text-primary-500;
+  }
+  
+  .tab-item-inactive {
+    @apply tab-item text-neutral-400;
+  }
+}
+
+/* Utilities layer for custom utilities */
+@layer utilities {
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    .btn {
+      @apply border-2 border-current;
+    }
+    
+    .safety-card-safe {
+      @apply border-safety-safe-600;
+    }
+    
+    .safety-card-danger {
+      @apply border-safety-danger-600;
+    }
+    
+    .safety-card-caution {
+      @apply border-safety-caution-600;
+    }
+  }
+  
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+    
+    .skeleton {
+      @apply animate-none;
+    }
+  }
+  
+  /* Print styles for web */
+  @media print {
+    .no-print {
+      display: none !important;
+    }
+    
+    .print-only {
+      display: block !important;
+    }
+    
+    .safety-card {
+      @apply border-2 border-black;
+    }
+  }
+  
+  /* Safe area utilities for notched devices */
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .safe-area-left {
+    padding-left: env(safe-area-inset-left);
+  }
+  
+  .safe-area-right {
+    padding-right: env(safe-area-inset-right);
+  }
+  
+  .safe-area-x {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+  
+  .safe-area-y {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .safe-area-all {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}

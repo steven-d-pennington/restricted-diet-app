@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:14
+    container_name: supabase_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "54322:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+  rest:
+    image: postgrest/postgrest:v10.1.2
+    depends_on:
+      - db
+    restart: unless-stopped
+    environment:
+      PGRST_DB_URI: postgres://postgres:postgres@db:5432/postgres
+      PGRST_DB_SCHEMA: public
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: super-secret-jwt
+    ports:
+      - "54321:3000"
+
+  studio:
+    image: supabase/studio:latest
+    restart: unless-stopped
+    environment:
+      SUPABASE_URL: http://localhost:54321
+      SUPABASE_PUBLIC_ANON_KEY: super-secret-anon-key
+      SUPABASE_SERVICE_ROLE_KEY: super-secret-service-key
+    ports:
+      - "54323:3000"
+
+volumes:
+  db-data:

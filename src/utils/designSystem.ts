@@ -282,8 +282,8 @@ export function useInputClasses() {
       return `${baseClass} border-neutral-300 focus:ring-primary-500 focus:border-primary-500`;
     },
     
-    // Web-only fallback style to ensure visible inputs even if className processing fails
-    getInputStyle: (hasError: boolean = false): (ViewStyle & TextStyle) | undefined => {
+  // Web-only fallback style to ensure visible inputs even if className processing fails
+  getInputStyle: (hasError: boolean = false): (ViewStyle & TextStyle) | undefined => {
       if (Platform.OS !== 'web') return undefined;
       return {
         borderWidth: 1,
@@ -292,6 +292,9 @@ export function useInputClasses() {
         paddingVertical: 8,
         paddingHorizontal: 12,
         backgroundColor: '#ffffff',
+    // Make text clearly visible
+    color: '#111827', /* gray-900 */
+    fontSize: 16,
         // Provide a subtle box shadow similar to Tailwind's shadow-sm
         shadowColor: 'rgba(0,0,0,0.1)',
         shadowOpacity: 1,

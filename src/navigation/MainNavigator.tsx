@@ -23,7 +23,8 @@ import {
 import { DashboardScreen } from '../screens/main/DashboardScreen'
 import { ScannerScreen } from '../screens/main/ScannerScreen'
 import { ScanResultScreen } from '../screens/placeholder/ScanResultScreen'
-import { ProfileScreen } from '../screens/placeholder/ProfileScreen'
+import { ProfileOverviewScreen } from '../screens/profile/ProfileOverviewScreen'
+import { EditProfileScreen } from '../screens/profile/EditProfileScreen'
 import { EmergencyScreen } from '../screens/placeholder/EmergencyScreen'
 import { FamilyScreen } from '../screens/placeholder/FamilyScreen'
 import { SimpleScreen } from '../components/SimpleScreen'
@@ -184,11 +185,11 @@ const ProfileStackNavigator: React.FC = () => {
     >
       <ProfileStack.Screen 
         name="ProfileOverview" 
-        component={ProfileScreen}
+        component={ProfileOverviewScreen}
       />
       <ProfileStack.Screen 
         name="EditProfile" 
-        component={() => <SimpleScreen title="Edit Profile" />}
+        component={EditProfileScreen}
         options={{ headerShown: true, title: 'Edit Profile' }}
       />
       <ProfileStack.Screen 

@@ -39,9 +39,9 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
     setIsSubmitting(true)
     
     try {
-      const result = await signIn(email.trim().toLowerCase(), password)
+  const result = await signIn(email.trim().toLowerCase(), password)
       
-      if (!result.success) {
+  if (result.error) {
         Alert.alert(
           'Sign In Failed', 
           result.error?.message || 'Please check your credentials and try again'

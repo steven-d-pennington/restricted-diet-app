@@ -6,10 +6,11 @@
  */
 
 import React from 'react'
-import { View, Text, TouchableOpacity, Image } from 'react-native'
+import { View, Text, TouchableOpacity } from 'react-native'
 import { SafetyBadge } from '../SafetyBadge'
 import { SafetyButton } from '../SafetyButton'
 import { RestaurantWithSafetyInfo, SafetyLevel } from '../../types/database.types'
+import type { ComponentVariant } from '../../utils/designSystem'
 
 interface RestaurantCardProps {
   restaurant: RestaurantWithSafetyInfo
@@ -30,7 +31,21 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
 }) => {
   const safetyDetails = restaurant.safety_rating_details
   const primarySafety = safetyDetails?.user_specific_safety || 'safe'
-  const safetyScore = safetyDetails?.safety_score || 100
+  // Derive a simple safety score from the primary safety level (fallback when no numeric score provided)
+  const derivedSafetyScore = (() => {
+    switch (primarySafety) {
+      case 'safe':
+        return 90
+      case 'caution':
+        return 65
+      case 'warning':
+        return 45
+      case 'danger':
+        return 20
+      default:
+        return 60
+    }
+  })()
 
   const formatDistance = (distance?: number): string => {
     if (!distance) return ''
@@ -43,13 +58,17 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
     return '$'.repeat(range)
   }
 
-  const getSafetyBadgeVariant = (safety: SafetyLevel): 'success' | 'warning' | 'error' | 'info' => {
+  const getButtonVariantFromSafety = (safety: SafetyLevel): ComponentVariant => {
     switch (safety) {
-      case 'safe': return 'success'
-      case 'caution': return 'info'
-      case 'warning': return 'warning'
-      case 'danger': return 'error'
-      default: return 'info'
+      case 'safe':
+        return 'success'
+      case 'caution':
+      case 'warning':
+        return 'warning'
+      case 'danger':
+        return 'error'
+      default:
+        return 'primary'
     }
   }
 
@@ -101,8 +120,7 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
         <View className="ml-2">
           <SafetyBadge 
             level={primarySafety}
-            variant={getSafetyBadgeVariant(primarySafety)}
-            size="sm"
+            size="small"
           />
         </View>
 
@@ -230,25 +248,24 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
               <Text className="text-gray-900 font-semibold text-sm">Safety Assessment</Text>
               <SafetyBadge 
                 level={primarySafety}
-                variant={getSafetyBadgeVariant(primarySafety)}
                 showIcon={true}
               />
             </View>
 
-            {/* Safety Score */}
+            {/* Safety Score (derived) */}
             <View className="flex-row items-center mb-2">
               <Text className="text-gray-600 text-sm mr-2">Safety Score:</Text>
               <View className="flex-1 bg-gray-200 rounded-full h-2 mr-2">
                 <View 
                   className={`h-2 rounded-full ${
-                    safetyScore >= 80 ? 'bg-green-500' :
-                    safetyScore >= 60 ? 'bg-yellow-500' :
-                    safetyScore >= 40 ? 'bg-orange-500' : 'bg-red-500'
+                    derivedSafetyScore >= 80 ? 'bg-green-500' :
+                    derivedSafetyScore >= 60 ? 'bg-yellow-500' :
+                    derivedSafetyScore >= 40 ? 'bg-orange-500' : 'bg-red-500'
                   }`}
-                  style={{ width: `${safetyScore}%` }}
+                  style={{ width: `${derivedSafetyScore}%` }}
                 />
               </View>
-              <Text className="text-gray-700 text-sm font-medium">{safetyScore}%</Text>
+              <Text className="text-gray-700 text-sm font-medium">{derivedSafetyScore}%</Text>
             </View>
 
             {/* Safety Details */}
@@ -271,10 +288,10 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
             {/* Action Button */}
             <View className="mt-3">
               <SafetyButton
-                level={primarySafety}
                 title="View Safety Details"
                 onPress={onPress}
                 size="sm"
+                variant={getButtonVariantFromSafety(primarySafety)}
                 fullWidth={true}
               />
             </View>

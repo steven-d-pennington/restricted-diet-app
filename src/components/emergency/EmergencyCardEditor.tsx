@@ -100,7 +100,7 @@ export const EmergencyCardEditor: React.FC<EmergencyCardEditorProps> = ({
 
       setHasUnsavedChanges(hasChanges)
     } else if (!isEditing) {
-      const hasData = cardName || restrictionsSummary || emergencyInstructions
+      const hasData = Boolean(cardName || restrictionsSummary || emergencyInstructions)
       setHasUnsavedChanges(hasData)
     }
   }, [

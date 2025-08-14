@@ -19,8 +19,9 @@ const supabaseStorageAdapter = {
 }
 
 // Environment variables validation
-const supabaseUrl = process.env.SUPABASE_URL
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY
+// Prefer Expo public env vars on web; fall back to plain vars for native/dev
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
+const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY
 
 if (!supabaseUrl) {
   throw new Error('Missing SUPABASE_URL environment variable')

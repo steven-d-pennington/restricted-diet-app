@@ -200,7 +200,7 @@ export const RestaurantPhotosScreen: React.FC<RestaurantPhotosScreenProps> = ({
         {photo.safety_context && (
           <SafetyBadge
             level={photo.safety_context}
-            size="sm"
+            size="small"
           />
         )}
       </View>
@@ -316,7 +316,6 @@ export const RestaurantPhotosScreen: React.FC<RestaurantPhotosScreenProps> = ({
       <Modal
         visible={showFullScreen}
         animationType="fade"
-        backgroundColor="black"
         onRequestClose={() => setShowFullScreen(false)}
       >
         <SafeAreaView className="flex-1 bg-black">
@@ -337,7 +336,7 @@ export const RestaurantPhotosScreen: React.FC<RestaurantPhotosScreenProps> = ({
                   {selectedPhoto.safety_context && (
                     <SafetyBadge
                       level={selectedPhoto.safety_context}
-                      size="md"
+                      size="medium"
                     />
                   )}
                   

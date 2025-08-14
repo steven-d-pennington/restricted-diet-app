@@ -6,15 +6,23 @@
  */
 
 import React from 'react'
-import { View, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native'
+import { View, Text, StyleSheet, ViewStyle } from 'react-native'
 import { SafetyLevel } from '../types/database.types'
 
 interface SafetyBadgeProps {
-  level: SafetyLevel
+  level?: SafetyLevel
+  /**
+   * Back-compat alias used in some screens. If provided, overrides level.
+   */
+  status?: 'safe' | 'caution' | 'warning' | 'danger' | 'unknown'
   text?: string
   size?: 'small' | 'medium' | 'large'
   showIcon?: boolean
   style?: ViewStyle
+  /**
+   * nativewind passes className; accept it to satisfy TS (not used directly here)
+   */
+  className?: string
   testID?: string
 }
 
@@ -73,13 +81,15 @@ const getSafetyInfo = (level: SafetyLevel): SafetyInfo => {
 
 export const SafetyBadge: React.FC<SafetyBadgeProps> = ({
   level,
+  status,
   text,
   size = 'medium',
   showIcon = true,
   style,
   testID,
 }) => {
-  const safetyInfo = getSafetyInfo(level)
+  const effectiveLevel: SafetyLevel = ((status as SafetyLevel) || level || 'caution') as SafetyLevel
+  const safetyInfo = getSafetyInfo(effectiveLevel)
   
   const sizeStyles = {
     small: {

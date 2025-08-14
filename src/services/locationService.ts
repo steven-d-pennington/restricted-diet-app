@@ -267,7 +267,7 @@ class LocationService {
           timeInterval: 30000, // 30 seconds
           distanceInterval: 50, // 50 meters
         },
-        (location) => {
+  (location: any) => {
           const coordinates: LocationCoordinates = {
             latitude: location.coords.latitude,
             longitude: location.coords.longitude

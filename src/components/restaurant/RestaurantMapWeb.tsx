@@ -216,7 +216,7 @@ export const RestaurantMapWeb: React.FC<RestaurantMapWebProps> = ({
                       <View className="flex-row items-center flex-wrap gap-2">
                         <SafetyBadge 
                           level={safetyLevel}
-                          size="sm"
+                          size="small"
                           showIcon={true}
                         />
                         

@@ -9,7 +9,7 @@ import React, { useState, useEffect } from 'react'
 import { View, Text, Pressable, ScrollView, TextInput, Switch, Alert, Modal } from 'react-native'
 import { Picker } from '@react-native-picker/picker'
 import {
-  SafetyIncidentReport,
+  SafetyIncidentReport as SafetyIncidentReportData,
   IncidentSeverity,
   DietaryRestriction
 } from '../../types/database.types'
@@ -22,8 +22,8 @@ interface SafetyIncidentReportProps {
   onClose: () => void
   restaurantId: string
   reviewId?: string
-  onSubmit?: (incident: SafetyIncidentReport) => void
-  initialData?: Partial<SafetyIncidentReport>
+  onSubmit?: (incident: SafetyIncidentReportData) => void
+  initialData?: Partial<SafetyIncidentReportData>
 }
 
 const SEVERITY_LEVELS: Array<{ value: IncidentSeverity, label: string, description: string }> = [
@@ -89,7 +89,7 @@ export default function SafetyIncidentReport({
   const totalSteps = 4
 
   // Form state
-  const [incidentData, setIncidentData] = useState<Partial<SafetyIncidentReport>>({
+  const [incidentData, setIncidentData] = useState<Partial<SafetyIncidentReportData>>({
     restaurant_id: restaurantId,
     severity: 'minor',
     restriction_ids: [],
@@ -128,7 +128,7 @@ export default function SafetyIncidentReport({
     }
   }
 
-  const updateIncidentData = (updates: Partial<SafetyIncidentReport>) => {
+  const updateIncidentData = (updates: Partial<SafetyIncidentReportData>) => {
     setIncidentData(prev => ({ ...prev, ...updates }))
   }
 
@@ -194,7 +194,7 @@ export default function SafetyIncidentReport({
       return
     }
 
-    const completeIncident: SafetyIncidentReport = {
+  const completeIncident: SafetyIncidentReportData = {
       restaurant_id: restaurantId,
       severity: incidentData.severity!,
       restriction_ids: incidentData.restriction_ids!,

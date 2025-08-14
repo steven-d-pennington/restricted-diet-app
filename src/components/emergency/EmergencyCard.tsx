@@ -14,6 +14,7 @@ import { SafetyColors, Typography, getAccessibilityProps } from '../../utils/des
 interface EmergencyCardProps {
   card: EmergencyCardType
   onPress?: () => void
+  onLongPress?: () => void
   showQRCode?: boolean
   compactMode?: boolean
   viewMode?: 'card' | 'responder' | 'list'
@@ -22,6 +23,7 @@ interface EmergencyCardProps {
 export const EmergencyCard: React.FC<EmergencyCardProps> = ({
   card,
   onPress,
+  onLongPress,
   showQRCode = false,
   compactMode = false,
   viewMode = 'card'
@@ -134,6 +136,7 @@ export const EmergencyCard: React.FC<EmergencyCardProps> = ({
     return (
       <Pressable
         onPress={onPress}
+        onLongPress={onLongPress}
         className={`${severityColor} border-l-4 p-4 mb-2 rounded-lg active:opacity-70`}
         {...getAccessibilityProps(
           `Emergency card for ${card.card_name}. Severity: ${card.severity_level}`,

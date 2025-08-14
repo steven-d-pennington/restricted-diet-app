@@ -125,11 +125,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       })
 
       if (authError) {
-        return handleSupabaseResponse({ data: null, error: authError })
+  return handleSupabaseResponse<{ user: User | null; profile: UserProfile | null }>({ data: null, error: authError })
       }
 
       if (!authData.user) {
-        return handleSupabaseResponse({ 
+  return handleSupabaseResponse<{ user: User | null; profile: UserProfile | null }>({ 
           data: null, 
           error: { message: 'Failed to create user account' } 
         })
@@ -145,7 +145,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         ...profileData,
       }
 
-      const { data: profileData, error: profileError } = await supabase
+      const { data: createdProfile, error: profileError } = await supabase
         .from('user_profiles')
         .insert(profileInsert)
         .select()
@@ -154,19 +154,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (profileError) {
         console.error('Error creating user profile:', profileError)
         // Note: User account was created but profile failed
-        return handleSupabaseResponse({
+        return handleSupabaseResponse<{ user: User | null; profile: UserProfile | null }>({
           data: { user: authData.user, profile: null },
           error: profileError
         })
       }
 
-      return handleSupabaseResponse({
-        data: { user: authData.user, profile: profileData },
+      return handleSupabaseResponse<{ user: User | null; profile: UserProfile | null }>({
+        data: { user: authData.user, profile: createdProfile },
         error: null
       })
     } catch (error) {
       console.error('Error in signUp:', error)
-      return handleSupabaseResponse({
+      return handleSupabaseResponse<{ user: User | null; profile: UserProfile | null }>({
         data: null,
         error: { message: 'An unexpected error occurred during sign up' }
       })
@@ -185,16 +185,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       })
 
       if (error) {
-        return handleSupabaseResponse({ data: null, error })
+        return handleSupabaseResponse<{ user: User | null; session: Session | null }>({ data: null, error })
       }
 
-      return handleSupabaseResponse({
+      return handleSupabaseResponse<{ user: User | null; session: Session | null }>({
         data: { user: data.user, session: data.session },
         error: null
       })
     } catch (error) {
       console.error('Error in signIn:', error)
-      return handleSupabaseResponse({
+      return handleSupabaseResponse<{ user: User | null; session: Session | null }>({
         data: null,
         error: { message: 'An unexpected error occurred during sign in' }
       })
@@ -207,13 +207,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const { error } = await supabase.auth.signOut()
       
       if (error) {
-        return handleSupabaseResponse({ data: null, error })
+        return handleSupabaseResponse<void>({ data: null, error })
       }
 
-      return handleSupabaseResponse({ data: null, error: null })
+      return handleSupabaseResponse<void>({ data: null, error: null })
     } catch (error) {
       console.error('Error in signOut:', error)
-      return handleSupabaseResponse({
+      return handleSupabaseResponse<void>({
         data: null,
         error: { message: 'An unexpected error occurred during sign out' }
       })
@@ -225,10 +225,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email)
       
-      return handleSupabaseResponse({ data: null, error })
+  return handleSupabaseResponse<void>({ data: null, error })
     } catch (error) {
       console.error('Error in resetPassword:', error)
-      return handleSupabaseResponse({
+  return handleSupabaseResponse<void>({
         data: null,
         error: { message: 'An unexpected error occurred during password reset' }
       })
@@ -240,10 +240,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const { error } = await supabase.auth.updateUser({ password })
       
-      return handleSupabaseResponse({ data: null, error })
+  return handleSupabaseResponse<void>({ data: null, error })
     } catch (error) {
       console.error('Error in updatePassword:', error)
-      return handleSupabaseResponse({
+  return handleSupabaseResponse<void>({
         data: null,
         error: { message: 'An unexpected error occurred during password update' }
       })
@@ -253,7 +253,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Update user profile
   const updateProfile = async (updates: Partial<UserProfile>): Promise<SupabaseResponse<UserProfile>> => {
     if (!user) {
-      return handleSupabaseResponse({
+      return handleSupabaseResponse<UserProfile>({
         data: null,
         error: { message: 'User must be authenticated to update profile' }
       })
@@ -268,14 +268,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         .single()
 
       if (error) {
-        return handleSupabaseResponse({ data: null, error })
+        return handleSupabaseResponse<UserProfile>({ data: null, error })
       }
 
       setUserProfile(data)
-      return handleSupabaseResponse({ data, error: null })
+      return handleSupabaseResponse<UserProfile>({ data, error: null })
     } catch (error) {
       console.error('Error in updateProfile:', error)
-      return handleSupabaseResponse({
+      return handleSupabaseResponse<UserProfile>({
         data: null,
         error: { message: 'An unexpected error occurred during profile update' }
       })

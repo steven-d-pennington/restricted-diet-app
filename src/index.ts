@@ -123,10 +123,8 @@ export type { AppError } from './utils/errorHandling'
 /**
  * Hook return types for better TypeScript support
  */
-export type { UseUserProfileReturn } from './hooks/useUserProfile'
-export type { UseFamilyMembersReturn } from './hooks/useFamilyMembers'
-export type { UseProductSafetyReturn } from './hooks/useProductSafety'
-export type { UseEmergencyCardsReturn } from './hooks/useEmergencyCards'
+// Re-export hooks (types are internal to each hook)
+// Note: hooks are already exported above as defaults
 
 /**
  * SAFETY GUIDELINES FOR DEVELOPERS:

@@ -148,7 +148,6 @@ export const AuthNavigator: React.FC = () => {
         <Stack.Screen 
           name="OnboardingComplete" 
           component={PlaceholderScreen}
-          initialParams={{ title: 'Setup Complete' }}
           options={{
             gestureEnabled: false,
             headerShown: false,

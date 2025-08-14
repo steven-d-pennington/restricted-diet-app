@@ -7,6 +7,7 @@
 
 import React from 'react'
 import { View, Text, TouchableOpacity, StyleSheet, ViewStyle } from 'react-native'
+import type { SafetyLevel } from '../types/database.types'
 
 interface SafetyCardProps {
   title?: string
@@ -16,6 +17,9 @@ interface SafetyCardProps {
   style?: ViewStyle
   testID?: string
   children?: React.ReactNode
+  level?: SafetyLevel // optional visual accent for safety level
+  className?: string // accepted for compatibility with nativewind props
+  status?: 'safe' | 'caution' | 'warning' | 'danger' | 'unknown' // back-compat alias
 }
 
 export const SafetyCard: React.FC<SafetyCardProps> = ({
@@ -26,9 +30,26 @@ export const SafetyCard: React.FC<SafetyCardProps> = ({
   style,
   testID,
   children,
+  level,
+  status,
 }) => {
+  const levelColors: Record<SafetyLevel | 'unknown', string> = {
+    safe: '#10B981',
+    caution: '#F59E0B',
+    warning: '#F97316',
+    danger: '#EF4444',
+    unknown: '#6B7280',
+  }
+  const statusToLevel = (s?: string): SafetyLevel | 'unknown' => {
+    if (!s) return 'unknown'
+    if (s === 'safe' || s === 'caution' || s === 'warning' || s === 'danger') return s
+    return 'unknown'
+  }
+  const effectiveLevel = level || statusToLevel(status)
+  const accentColor = effectiveLevel !== 'unknown' ? levelColors[effectiveLevel] : undefined
   const CardContent = () => (
     <View style={[styles.card, style]} testID={testID}>
+      {accentColor && <View style={[styles.accent, { backgroundColor: accentColor }]} />}
       {/* Header */}
       {(title || description) && (
         <View style={styles.header}>
@@ -110,6 +131,14 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+  },
+  accent: {
+    height: 4,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    marginTop: -16,
+    marginHorizontal: -16,
+    marginBottom: 12,
   },
   touchable: {
     borderRadius: 12,

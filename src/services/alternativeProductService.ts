@@ -14,7 +14,7 @@ export interface AlternativeProduct {
   safetyLevel: SafetyLevel
   matchScore: number // How well it matches the original product
   availabilityScore: number // How available/common the product is
-  reasonSafer: string[]
+  reasonsSafer: string[]
 }
 
 export interface AlternativeSearchOptions {
@@ -196,7 +196,7 @@ class AlternativeProductService {
       safetyLevel,
       matchScore: Math.round(matchScore),
       availabilityScore,
-      reasonSafer,
+  reasonsSafer,
     }
   }
 
@@ -395,7 +395,7 @@ class AlternativeProductService {
       title: alt.product.name,
       subtitle: alt.product.brand ? `by ${alt.product.brand}` : 'Generic brand',
       safetyBadge: alt.safetyLevel,
-      reasons: alt.reasonSafer,
+      reasons: alt.reasonsSafer,
     }))
   }
 }

@@ -7,8 +7,16 @@
 
 import 'react-native-url-polyfill/auto'
 import { createClient } from '@supabase/supabase-js'
-import AsyncStorage from '@react-native-async-storage/async-storage'
+import { Storage } from '../utils/storage'
+import { PlatformUtils } from '../utils/platformUtils'
 import { Database } from '../types/database.types'
+
+// Create a storage adapter that matches Supabase's expected interface
+const supabaseStorageAdapter = {
+  getItem: (key: string) => Storage.getItem(key),
+  setItem: (key: string, value: string) => Storage.setItem(key, value),
+  removeItem: (key: string) => Storage.removeItem(key)
+}
 
 // Environment variables validation
 const supabaseUrl = process.env.SUPABASE_URL
@@ -23,15 +31,15 @@ if (!supabaseAnonKey) {
 }
 
 /**
- * Supabase client with proper TypeScript types and AsyncStorage configuration
- * for React Native persistence
+ * Supabase client with proper TypeScript types and platform-universal storage configuration
+ * Works on both React Native and web platforms
  */
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
-    storage: AsyncStorage,
+    storage: supabaseStorageAdapter,
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: false,
+    detectSessionInUrl: PlatformUtils.isWeb, // Only detect session in URL on web
   },
   global: {
     headers: {

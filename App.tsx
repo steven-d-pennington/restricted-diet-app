@@ -6,7 +6,7 @@ import { AuthProvider } from './src';
 import { RootNavigator } from './src/navigation/RootNavigator';
 
 // Import global CSS for NativeWind styling
-import './global.css';
+// import './global.css';
 
 /**
  * Main App Component with Navigation and Supabase Integration

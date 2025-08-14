@@ -1,0 +1,507 @@
+/**
+ * Location Service
+ * 
+ * SAFETY CRITICAL: Provides accurate location data for finding safe restaurants
+ * Handles GPS permissions, geocoding, and location-based calculations
+ */
+
+import { Platform } from 'react-native'
+import { LocationCoordinates } from '../types/database.types'
+
+// Platform-specific imports
+let Location: any
+
+if (Platform.OS !== 'web') {
+  try {
+    Location = require('expo-location')
+  } catch (error) {
+    console.warn('expo-location not available:', error)
+  }
+}
+
+export interface LocationServiceError {
+  code: 'PERMISSION_DENIED' | 'LOCATION_UNAVAILABLE' | 'TIMEOUT' | 'GEOCODING_FAILED'
+  message: string
+  details?: any
+}
+
+export interface GeocodeResult {
+  coordinates: LocationCoordinates
+  formatted_address: string
+  address_components: {
+    street_number?: string
+    route?: string
+    locality?: string
+    administrative_area_level_1?: string
+    postal_code?: string
+    country?: string
+  }
+}
+
+export interface LocationPermissionStatus {
+  granted: boolean
+  canAskAgain: boolean
+  status: string
+}
+
+class LocationService {
+  private static instance: LocationService
+  private currentLocation: LocationCoordinates | null = null
+  private watchId: any | null = null
+  private geocodeCache: Map<string, GeocodeResult> = new Map()
+
+  static getInstance(): LocationService {
+    if (!LocationService.instance) {
+      LocationService.instance = new LocationService()
+    }
+    return LocationService.instance
+  }
+
+  /**
+   * Request location permissions from the user
+   */
+  async requestLocationPermissions(): Promise<LocationPermissionStatus> {
+    if (Platform.OS === 'web' || !Location) {
+      // Web fallback - use browser geolocation API
+      return new Promise((resolve) => {
+        if ('geolocation' in navigator) {
+          resolve({
+            granted: true,
+            canAskAgain: false,
+            status: 'granted'
+          })
+        } else {
+          resolve({
+            granted: false,
+            canAskAgain: false,
+            status: 'denied'
+          })
+        }
+      })
+    }
+
+    try {
+      const { status, canAskAgain } = await Location.requestForegroundPermissionsAsync()
+      
+      return {
+        granted: status === 'granted',
+        canAskAgain,
+        status
+      }
+    } catch (error) {
+      console.error('Error requesting location permissions:', error)
+      throw {
+        code: 'PERMISSION_DENIED',
+        message: 'Failed to request location permissions',
+        details: error
+      } as LocationServiceError
+    }
+  }
+
+  /**
+   * Check current location permission status
+   */
+  async getLocationPermissionStatus(): Promise<LocationPermissionStatus> {
+    if (Platform.OS === 'web' || !Location) {
+      // Web fallback - check browser geolocation support
+      return {
+        granted: 'geolocation' in navigator,
+        canAskAgain: false,
+        status: 'geolocation' in navigator ? 'granted' : 'denied'
+      }
+    }
+
+    try {
+      const { status, canAskAgain } = await Location.getForegroundPermissionsAsync()
+      
+      return {
+        granted: status === 'granted',
+        canAskAgain,
+        status
+      }
+    } catch (error) {
+      console.error('Error checking location permissions:', error)
+      throw {
+        code: 'PERMISSION_DENIED',
+        message: 'Failed to check location permissions',
+        details: error
+      } as LocationServiceError
+    }
+  }
+
+  /**
+   * Get the user's current location
+   */
+  async getCurrentLocation(highAccuracy: boolean = true): Promise<LocationCoordinates> {
+    if (Platform.OS === 'web' || !Location) {
+      // Web fallback - use browser geolocation API
+      return new Promise((resolve, reject) => {
+        if (!('geolocation' in navigator)) {
+          reject({
+            code: 'LOCATION_UNAVAILABLE',
+            message: 'Geolocation is not supported by this browser.'
+          } as LocationServiceError)
+          return
+        }
+
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const coordinates: LocationCoordinates = {
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude
+            }
+            this.currentLocation = coordinates
+            resolve(coordinates)
+          },
+          (error) => {
+            reject({
+              code: 'LOCATION_UNAVAILABLE',
+              message: 'Unable to retrieve your current location.',
+              details: error
+            } as LocationServiceError)
+          },
+          {
+            enableHighAccuracy: highAccuracy,
+            timeout: 10000,
+            maximumAge: 60000
+          }
+        )
+      })
+    }
+
+    try {
+      const permissions = await this.getLocationPermissionStatus()
+      if (!permissions.granted) {
+        const newPermissions = await this.requestLocationPermissions()
+        if (!newPermissions.granted) {
+          throw {
+            code: 'PERMISSION_DENIED',
+            message: 'Location permission is required to find nearby restaurants'
+          } as LocationServiceError
+        }
+      }
+
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: highAccuracy ? Location.Accuracy.High : Location.Accuracy.Balanced,
+        timeInterval: 10000, // 10 seconds
+        distanceInterval: 10, // 10 meters
+      })
+
+      const coordinates: LocationCoordinates = {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude
+      }
+
+      this.currentLocation = coordinates
+      return coordinates
+
+    } catch (error: any) {
+      console.error('Error getting current location:', error)
+      
+      if (error.code === 'PERMISSION_DENIED') {
+        throw error
+      }
+
+      throw {
+        code: 'LOCATION_UNAVAILABLE',
+        message: 'Unable to retrieve your current location. Please check your device settings.',
+        details: error
+      } as LocationServiceError
+    }
+  }
+
+  /**
+   * Watch for location changes (for real-time updates)
+   */
+  async startLocationTracking(
+    callback: (location: LocationCoordinates) => void,
+    highAccuracy: boolean = false
+  ): Promise<void> {
+    if (Platform.OS === 'web' || !Location) {
+      // Web fallback - use watchPosition if available
+      if ('geolocation' in navigator) {
+        this.watchId = navigator.geolocation.watchPosition(
+          (position) => {
+            const coordinates: LocationCoordinates = {
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude
+            }
+            this.currentLocation = coordinates
+            callback(coordinates)
+          },
+          (error) => {
+            console.error('Web geolocation error:', error)
+          },
+          {
+            enableHighAccuracy: highAccuracy,
+            timeout: 30000,
+            maximumAge: 50000
+          }
+        )
+      } else {
+        throw {
+          code: 'LOCATION_UNAVAILABLE',
+          message: 'Location tracking not available in this browser'
+        } as LocationServiceError
+      }
+      return
+    }
+
+    try {
+      const permissions = await this.getLocationPermissionStatus()
+      if (!permissions.granted) {
+        throw {
+          code: 'PERMISSION_DENIED',
+          message: 'Location permission is required for location tracking'
+        } as LocationServiceError
+      }
+
+      // Stop existing tracking
+      if (this.watchId) {
+        this.stopLocationTracking()
+      }
+
+      this.watchId = await Location.watchPositionAsync(
+        {
+          accuracy: highAccuracy ? Location.Accuracy.High : Location.Accuracy.Balanced,
+          timeInterval: 30000, // 30 seconds
+          distanceInterval: 50, // 50 meters
+        },
+        (location) => {
+          const coordinates: LocationCoordinates = {
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude
+          }
+          this.currentLocation = coordinates
+          callback(coordinates)
+        }
+      )
+
+    } catch (error) {
+      console.error('Error starting location tracking:', error)
+      throw {
+        code: 'LOCATION_UNAVAILABLE',
+        message: 'Unable to start location tracking',
+        details: error
+      } as LocationServiceError
+    }
+  }
+
+  /**
+   * Stop location tracking
+   */
+  stopLocationTracking(): void {
+    if (this.watchId) {
+      if (Platform.OS === 'web' && 'geolocation' in navigator) {
+        navigator.geolocation.clearWatch(this.watchId)
+      } else if (this.watchId.remove) {
+        this.watchId.remove()
+      }
+      this.watchId = null
+    }
+  }
+
+  /**
+   * Convert address string to coordinates (geocoding)
+   */
+  async geocodeAddress(address: string): Promise<GeocodeResult> {
+    if (Platform.OS === 'web' || !Location) {
+      throw {
+        code: 'GEOCODING_FAILED',
+        message: 'Geocoding not available on web platform. Please enter coordinates manually.'
+      } as LocationServiceError
+    }
+
+    try {
+      // Check cache first
+      const cacheKey = address.toLowerCase().trim()
+      if (this.geocodeCache.has(cacheKey)) {
+        return this.geocodeCache.get(cacheKey)!
+      }
+
+      const results = await Location.geocodeAsync(address)
+      
+      if (results.length === 0) {
+        throw {
+          code: 'GEOCODING_FAILED',
+          message: 'No results found for the provided address'
+        } as LocationServiceError
+      }
+
+      const result = results[0]
+      const coordinates: LocationCoordinates = {
+        latitude: result.latitude,
+        longitude: result.longitude
+      }
+
+      // Get reverse geocoding for formatted address
+      const reverseResults = await Location.reverseGeocodeAsync(coordinates)
+      const reverseResult = reverseResults[0]
+
+      const geocodeResult: GeocodeResult = {
+        coordinates,
+        formatted_address: this.formatAddress(reverseResult),
+        address_components: {
+          street_number: reverseResult.streetNumber || undefined,
+          route: reverseResult.street || undefined,
+          locality: reverseResult.city || undefined,
+          administrative_area_level_1: reverseResult.region || undefined,
+          postal_code: reverseResult.postalCode || undefined,
+          country: reverseResult.country || undefined,
+        }
+      }
+
+      // Cache the result
+      this.geocodeCache.set(cacheKey, geocodeResult)
+      
+      return geocodeResult
+
+    } catch (error: any) {
+      console.error('Geocoding error:', error)
+      
+      if (error.code && error.message) {
+        throw error
+      }
+
+      throw {
+        code: 'GEOCODING_FAILED',
+        message: 'Unable to find location for the provided address',
+        details: error
+      } as LocationServiceError
+    }
+  }
+
+  /**
+   * Convert coordinates to address (reverse geocoding)
+   */
+  async reverseGeocode(coordinates: LocationCoordinates): Promise<GeocodeResult> {
+    if (Platform.OS === 'web' || !Location) {
+      // Web fallback - return basic coordinates-based result
+      return {
+        coordinates,
+        formatted_address: `${coordinates.latitude.toFixed(6)}, ${coordinates.longitude.toFixed(6)}`,
+        address_components: {}
+      }
+    }
+
+    try {
+      const results = await Location.reverseGeocodeAsync(coordinates)
+      
+      if (results.length === 0) {
+        throw {
+          code: 'GEOCODING_FAILED',
+          message: 'No address found for the provided coordinates'
+        } as LocationServiceError
+      }
+
+      const result = results[0]
+      
+      return {
+        coordinates,
+        formatted_address: this.formatAddress(result),
+        address_components: {
+          street_number: result.streetNumber || undefined,
+          route: result.street || undefined,
+          locality: result.city || undefined,
+          administrative_area_level_1: result.region || undefined,
+          postal_code: result.postalCode || undefined,
+          country: result.country || undefined,
+        }
+      }
+
+    } catch (error: any) {
+      console.error('Reverse geocoding error:', error)
+      
+      if (error.code && error.message) {
+        throw error
+      }
+
+      throw {
+        code: 'GEOCODING_FAILED',
+        message: 'Unable to find address for the provided location',
+        details: error
+      } as LocationServiceError
+    }
+  }
+
+  /**
+   * Calculate distance between two coordinates using Haversine formula
+   */
+  calculateDistance(
+    coord1: LocationCoordinates,
+    coord2: LocationCoordinates
+  ): number {
+    const R = 6371 // Earth's radius in kilometers
+    const dLat = this.toRadians(coord2.latitude - coord1.latitude)
+    const dLon = this.toRadians(coord2.longitude - coord1.longitude)
+
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(this.toRadians(coord1.latitude)) *
+        Math.cos(this.toRadians(coord2.latitude)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2)
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+    return R * c // Distance in kilometers
+  }
+
+  /**
+   * Get last known location (cached)
+   */
+  getLastKnownLocation(): LocationCoordinates | null {
+    return this.currentLocation
+  }
+
+  /**
+   * Clear location cache
+   */
+  clearCache(): void {
+    this.geocodeCache.clear()
+    this.currentLocation = null
+  }
+
+  /**
+   * Helper method to format address from reverse geocoding result
+   */
+  private formatAddress(result: any): string {
+    if (!result) {
+      return 'Unknown location'
+    }
+
+    const parts: string[] = []
+    
+    if (result.streetNumber && result.street) {
+      parts.push(`${result.streetNumber} ${result.street}`)
+    } else if (result.street) {
+      parts.push(result.street)
+    }
+    
+    if (result.city) {
+      parts.push(result.city)
+    }
+    
+    if (result.region) {
+      parts.push(result.region)
+    }
+    
+    if (result.postalCode) {
+      parts.push(result.postalCode)
+    }
+    
+    if (result.country) {
+      parts.push(result.country)
+    }
+    
+    return parts.length > 0 ? parts.join(', ') : 'Unknown location'
+  }
+
+  /**
+   * Convert degrees to radians
+   */
+  private toRadians(degrees: number): number {
+    return degrees * (Math.PI / 180)
+  }
+}
+
+export default LocationService.getInstance()

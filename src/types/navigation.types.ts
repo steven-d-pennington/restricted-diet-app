@@ -36,9 +36,10 @@ export type AuthStackParamList = {
 export type MainTabParamList = {
   Home: undefined
   Scanner: undefined
-  Profile: undefined
+  Restaurants: undefined
   Emergency: undefined
   Family: undefined
+  Profile: undefined
 }
 
 // Nested Stack Navigators within Main Tabs
@@ -72,6 +73,17 @@ export type EmergencyStackParamList = {
   EditCard: { cardId: string }
   CardPreview: { cardId: string }
   ShareCard: { cardId: string }
+}
+
+export type RestaurantStackParamList = {
+  RestaurantSearch: undefined
+  RestaurantDetail: { restaurantId: string; restaurant?: any }
+  FavoriteRestaurants: undefined
+  RestaurantMenu: { restaurantId: string; restaurantName: string }
+  RestaurantPhotos: { restaurantId: string; restaurantName: string }
+  RestaurantReviews: { restaurantId: string; restaurantName: string }
+  WriteReview: { restaurantId: string; restaurantName: string; focusOnPhotos?: boolean }
+  SafetyIncidentReport: { restaurantId: string; restaurantName: string; incidentType?: 'exposure' | 'mislabeling' | 'contamination' | 'other' }
 }
 
 export type FamilyStackParamList = {
@@ -117,6 +129,12 @@ export type EmergencyStackScreenProps<T extends keyof EmergencyStackParamList> =
   CompositeScreenProps<
     NativeStackScreenProps<EmergencyStackParamList, T>,
     MainTabScreenProps<'Emergency'>
+  >
+
+export type RestaurantStackScreenProps<T extends keyof RestaurantStackParamList> = 
+  CompositeScreenProps<
+    NativeStackScreenProps<RestaurantStackParamList, T>,
+    MainTabScreenProps<'Restaurants'>
   >
 
 export type FamilyStackScreenProps<T extends keyof FamilyStackParamList> = 

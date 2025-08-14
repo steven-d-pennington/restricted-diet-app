@@ -12,6 +12,7 @@ import {
   MainTabParamList, 
   HomeStackParamList,
   ScannerStackParamList,
+  RestaurantStackParamList,
   ProfileStackParamList,
   EmergencyStackParamList,
   FamilyStackParamList,
@@ -27,12 +28,20 @@ import { EmergencyScreen } from '../screens/placeholder/EmergencyScreen'
 import { FamilyScreen } from '../screens/placeholder/FamilyScreen'
 import { SimpleScreen } from '../components/SimpleScreen'
 
+// Import restaurant screens
+import { 
+  RestaurantSearchScreen,
+  RestaurantDetailScreen,
+  FavoriteRestaurantsScreen
+} from '../screens/restaurant'
+
 // Tab Navigator
 const Tab = createBottomTabNavigator<MainTabParamList>()
 
 // Stack Navigators for each tab
 const HomeStack = createNativeStackNavigator<HomeStackParamList>()
 const ScannerStack = createNativeStackNavigator<ScannerStackParamList>()
+const RestaurantStack = createNativeStackNavigator<RestaurantStackParamList>()
 const ProfileStack = createNativeStackNavigator<ProfileStackParamList>()
 const EmergencyStack = createNativeStackNavigator<EmergencyStackParamList>()
 const FamilyStack = createNativeStackNavigator<FamilyStackParamList>()
@@ -42,9 +51,10 @@ const getTabBarIcon = (routeName: keyof MainTabParamList, focused: boolean): str
   const icons = {
     Home: focused ? '🏠' : '🏡',
     Scanner: focused ? '📱' : '📱',
-    Profile: focused ? '👤' : '👤',
+    Restaurants: focused ? '🍽️' : '🍴',
     Emergency: focused ? '🆘' : '🚨',
     Family: focused ? '👨‍👩‍👧‍👦' : '👥',
+    Profile: focused ? '👤' : '👤',
   }
   return icons[routeName]
 }
@@ -107,6 +117,60 @@ const ScannerStackNavigator: React.FC = () => {
         options={{ headerShown: true, title: 'Manual Entry' }}
       />
     </ScannerStack.Navigator>
+  )
+}
+
+// Restaurant Stack Navigator
+const RestaurantStackNavigator: React.FC = () => {
+  return (
+    <RestaurantStack.Navigator
+      screenOptions={{
+        headerShown: true,
+      }}
+    >
+      <RestaurantStack.Screen 
+        name="RestaurantSearch" 
+        component={RestaurantSearchScreen}
+        options={{ 
+          title: 'Find Restaurants',
+          headerShown: false // Screen handles its own header
+        }}
+      />
+      <RestaurantStack.Screen 
+        name="RestaurantDetail" 
+        component={RestaurantDetailScreen}
+        options={{ 
+          title: 'Restaurant Details',
+          headerBackTitleVisible: false
+        }}
+      />
+      <RestaurantStack.Screen 
+        name="FavoriteRestaurants" 
+        component={FavoriteRestaurantsScreen}
+        options={{ 
+          title: 'Favorites',
+          headerShown: false // Screen handles its own header
+        }}
+      />
+      <RestaurantStack.Screen 
+        name="RestaurantMenu" 
+        component={() => <SimpleScreen title="Restaurant Menu" />}
+        options={{ title: 'Menu' }}
+      />
+      <RestaurantStack.Screen 
+        name="RestaurantReviews" 
+        component={() => <SimpleScreen title="Restaurant Reviews" />}
+        options={{ title: 'Reviews' }}
+      />
+      <RestaurantStack.Screen 
+        name="WriteReview" 
+        component={() => <SimpleScreen title="Write Review" />}
+        options={{ 
+          title: 'Write Review',
+          presentation: 'modal'
+        }}
+      />
+    </RestaurantStack.Navigator>
   )
 }
 
@@ -276,6 +340,15 @@ export const MainNavigator: React.FC = () => {
         options={{
           tabBarLabel: 'Scan',
           tabBarAccessibilityLabel: 'Scanner tab',
+        }}
+      />
+
+      <Tab.Screen 
+        name="Restaurants" 
+        component={RestaurantStackNavigator}
+        options={{
+          tabBarLabel: 'Restaurants',
+          tabBarAccessibilityLabel: 'Restaurants tab',
         }}
       />
       

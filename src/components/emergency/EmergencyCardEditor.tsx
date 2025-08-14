@@ -15,6 +15,7 @@ import {
   Alert,
   Switch
 } from 'react-native'
+import { Picker } from '@react-native-picker/picker'
 import { 
   EmergencyCard, 
   EmergencyCardInsert, 
@@ -53,8 +54,23 @@ export const EmergencyCardEditor: React.FC<EmergencyCardEditorProps> = ({
   loading = false,
   familyMemberId,
 }) => {
-  const { getInputClass, getLabelClass, getErrorClass } = useInputClasses()
+  const { getInputClass, getInputStyle, getLabelClass, getErrorClass } = useInputClasses()
   const isEditing = !!card
+  const placeholderColor = '#6b7280' // gray-600 for better placeholder visibility on web
+
+  const isWeb = Platform.OS === 'web'
+  const webStyles = isWeb
+    ? {
+        container: { flex: 1, backgroundColor: '#ffffff' } as const,
+        header: { paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#e5e7eb', backgroundColor: '#ffffff' } as const,
+        headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' } as const,
+        title: { color: '#1f2937', fontSize: 18, fontWeight: '700' } as const,
+        unsaved: { color: '#c2410c', fontSize: 14 } as const,
+        scrollContent: { paddingHorizontal: 16, paddingVertical: 16, maxWidth: 720, width: '100%', alignSelf: 'center' } as const,
+        section: { marginBottom: 24 } as const,
+        severityRow: { flexDirection: 'row', flexWrap: 'wrap' } as const,
+      }
+    : {}
 
   // Form state
   const [cardName, setCardName] = useState(card?.card_name || '')
@@ -81,6 +97,7 @@ export const EmergencyCardEditor: React.FC<EmergencyCardEditorProps> = ({
   // Settings
   const [isActive, setIsActive] = useState(card?.is_active ?? true)
   const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(card?.profile_photo_url || null)
+  const [cardLanguage, setCardLanguage] = useState<string>(card?.card_language || 'en')
   const [errors, setErrors] = useState<FormErrors>({})
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
 
@@ -96,7 +113,8 @@ export const EmergencyCardEditor: React.FC<EmergencyCardEditorProps> = ({
         emergencyContact1Name !== (card.emergency_contact_1_name || '') ||
         emergencyContact1Phone !== (card.emergency_contact_1_phone || '') ||
         profilePhotoUrl !== (card.profile_photo_url || null) ||
-        isActive !== card.is_active
+  isActive !== card.is_active ||
+  cardLanguage !== card.card_language
 
       setHasUnsavedChanges(hasChanges)
     } else if (!isEditing) {
@@ -105,7 +123,7 @@ export const EmergencyCardEditor: React.FC<EmergencyCardEditorProps> = ({
     }
   }, [
     cardName, restrictionsSummary, severityLevel, emergencyInstructions, medications,
-    emergencyContact1Name, emergencyContact1Phone, isActive, card, isEditing
+  emergencyContact1Name, emergencyContact1Phone, isActive, cardLanguage, card, isEditing
   ])
 
   const validateForm = (): boolean => {
@@ -170,7 +188,7 @@ export const EmergencyCardEditor: React.FC<EmergencyCardEditorProps> = ({
       return
     }
 
-    const cardData = isEditing ? {
+  const cardData = isEditing ? {
       card_name: cardName.trim(),
       restrictions_summary: restrictionsSummary.trim(),
       severity_level: severityLevel,
@@ -186,7 +204,7 @@ export const EmergencyCardEditor: React.FC<EmergencyCardEditorProps> = ({
       doctor_phone: doctorPhone.trim() || null,
       insurance_info: insuranceInfo.trim() || null,
       additional_notes: additionalNotes.trim() || null,
-      profile_photo_url: profilePhotoUrl,
+      card_language: cardLanguage,
       is_active: isActive,
     } as EmergencyCardUpdate : {
       user_id: familyMemberId ? null : undefined,
@@ -206,8 +224,7 @@ export const EmergencyCardEditor: React.FC<EmergencyCardEditorProps> = ({
       doctor_phone: doctorPhone.trim() || null,
       insurance_info: insuranceInfo.trim() || null,
       additional_notes: additionalNotes.trim() || null,
-      profile_photo_url: profilePhotoUrl,
-      card_language: 'en',
+      card_language: cardLanguage,
       is_active: isActive,
     } as EmergencyCardInsert
 
@@ -243,16 +260,18 @@ export const EmergencyCardEditor: React.FC<EmergencyCardEditorProps> = ({
     <KeyboardAvoidingView 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       className="flex-1 bg-white"
+      // Web fallback to ensure white background and full height
+      style={(webStyles as any).container}
     >
       {/* Header */}
-      <View className="bg-white px-4 py-3 border-b border-gray-200">
-        <View className="flex-row items-center justify-between">
+      <View className="bg-white px-4 py-3 border-b border-gray-200" style={(webStyles as any).header}>
+        <View className="flex-row items-center justify-between" style={(webStyles as any).headerRow}>
           <View>
-            <Text className="text-gray-800 text-lg font-bold">
+            <Text className="text-gray-800 text-lg font-bold" style={(webStyles as any).title}>
               {isEditing ? 'Edit Emergency Card' : 'New Emergency Card'}
             </Text>
             {hasUnsavedChanges && (
-              <Text className="text-orange-600 text-sm">• Unsaved changes</Text>
+              <Text className="text-orange-600 text-sm" style={(webStyles as any).unsaved}>• Unsaved changes</Text>
             )}
           </View>
           
@@ -275,7 +294,7 @@ export const EmergencyCardEditor: React.FC<EmergencyCardEditorProps> = ({
         </View>
       </View>
 
-      <ScrollView className="flex-1 px-4 py-4" showsVerticalScrollIndicator={false}>
+  <ScrollView className="flex-1 px-4 py-4" showsVerticalScrollIndicator={false} contentContainerStyle={(webStyles as any).scrollContent}>
         {/* Generate from restrictions helper */}
         {!isEditing && userRestrictions.length > 0 && onGenerateFromRestrictions && (
           <View className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
@@ -294,7 +313,7 @@ export const EmergencyCardEditor: React.FC<EmergencyCardEditorProps> = ({
         )}
 
         {/* Profile Photo */}
-        <View className="mb-6">
+  <View className="mb-6" style={(webStyles as any).section}>
           <EmergencyPhotoCapture
             currentPhotoUrl={profilePhotoUrl}
             onPhotoSelected={setProfilePhotoUrl}
@@ -303,7 +322,7 @@ export const EmergencyCardEditor: React.FC<EmergencyCardEditorProps> = ({
         </View>
 
         {/* Basic Information */}
-        <View className="mb-6">
+  <View className="mb-6" style={(webStyles as any).section}>
           <Text className="text-gray-800 text-lg font-bold mb-4">Basic Information</Text>
           
           {/* Card Name */}
@@ -314,6 +333,8 @@ export const EmergencyCardEditor: React.FC<EmergencyCardEditorProps> = ({
               onChangeText={setCardName}
               placeholder="e.g., John's Emergency Card"
               className={getInputClass(!!errors.card_name)}
+              style={getInputStyle(!!errors.card_name)}
+              placeholderTextColor={placeholderColor}
               {...getAccessibilityProps('Card name input', 'Enter a name for this emergency card')}
             />
             {errors.card_name && (
@@ -329,6 +350,8 @@ export const EmergencyCardEditor: React.FC<EmergencyCardEditorProps> = ({
               onChangeText={setRestrictionsSummary}
               placeholder="e.g., Severe allergies: Peanuts, Shellfish, Dairy"
               className={getInputClass(!!errors.restrictions_summary)}
+              style={getInputStyle(!!errors.restrictions_summary)}
+              placeholderTextColor={placeholderColor}
               multiline
               numberOfLines={2}
               {...getAccessibilityProps('Medical restrictions input', 'List the main allergies or medical restrictions')}
@@ -341,32 +364,49 @@ export const EmergencyCardEditor: React.FC<EmergencyCardEditorProps> = ({
           {/* Severity Level */}
           <View className="mb-4">
             <Text className="text-sm font-medium text-gray-700 mb-2">Severity Level *</Text>
-            <View className="flex-row flex-wrap">
-              {severityOptions.map((option) => (
-                <Pressable
-                  key={option.value}
-                  onPress={() => setSeverityLevel(option.value)}
-                  className={`${option.color} ${
-                    severityLevel === option.value ? 'border-2' : 'border'
-                  } px-3 py-2 rounded-lg mr-2 mb-2 flex-row items-center`}
-                  {...getAccessibilityProps(`Severity level ${option.label}`, '', 'button')}
-                >
-                  <View className={`w-3 h-3 rounded-full mr-2 ${
-                    severityLevel === option.value ? 'bg-gray-800' : 'bg-gray-400'
-                  }`} />
-                  <Text className={`text-sm font-medium ${
-                    severityLevel === option.value ? 'text-gray-800' : 'text-gray-600'
-                  }`}>
-                    {option.label}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
+            {Platform.OS === 'web' ? (
+              <View style={{}}>
+                <View style={getInputStyle() as any}>
+                  <Picker
+                    selectedValue={severityLevel}
+                    onValueChange={(v) => setSeverityLevel(v as RestrictionSeverity)}
+                    dropdownIconColor="#374151"
+                    style={{ height: 36 }}
+                  >
+                    {severityOptions.map((o) => (
+                      <Picker.Item key={o.value} label={o.label} value={o.value} />
+                    ))}
+                  </Picker>
+                </View>
+              </View>
+            ) : (
+              <View className="flex-row flex-wrap" style={(webStyles as any).severityRow}>
+                {severityOptions.map((option) => (
+                  <Pressable
+                    key={option.value}
+                    onPress={() => setSeverityLevel(option.value)}
+                    className={`${option.color} ${
+                      severityLevel === option.value ? 'border-2' : 'border'
+                    } px-3 py-2 rounded-lg mr-2 mb-2 flex-row items-center`}
+                    {...getAccessibilityProps(`Severity level ${option.label}`, '', 'button')}
+                  >
+                    <View className={`w-3 h-3 rounded-full mr-2 ${
+                      severityLevel === option.value ? 'bg-gray-800' : 'bg-gray-400'
+                    }`} />
+                    <Text className={`text-sm font-medium ${
+                      severityLevel === option.value ? 'text-gray-800' : 'text-gray-600'
+                    }`}>
+                      {option.label}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
           </View>
         </View>
 
         {/* Emergency Instructions */}
-        <View className="mb-6">
+  <View className="mb-6" style={(webStyles as any).section}>
           <Text className="text-gray-800 text-lg font-bold mb-4">Emergency Instructions</Text>
           
           <View className="mb-4">
@@ -376,6 +416,8 @@ export const EmergencyCardEditor: React.FC<EmergencyCardEditorProps> = ({
               onChangeText={setEmergencyInstructions}
               placeholder="Clear instructions for emergency responders..."
               className={getInputClass(!!errors.emergency_instructions)}
+              style={getInputStyle(!!errors.emergency_instructions)}
+              placeholderTextColor={placeholderColor}
               multiline
               numberOfLines={4}
               {...getAccessibilityProps('Emergency instructions input', 'Enter instructions for first responders')}
@@ -387,7 +429,7 @@ export const EmergencyCardEditor: React.FC<EmergencyCardEditorProps> = ({
         </View>
 
         {/* Medications */}
-        <View className="mb-6">
+  <View className="mb-6" style={(webStyles as any).section}>
           <Text className="text-gray-800 text-lg font-bold mb-4">Medications</Text>
           
           <View className="mb-4">
@@ -398,6 +440,8 @@ export const EmergencyCardEditor: React.FC<EmergencyCardEditorProps> = ({
                 onChangeText={setMedicationInput}
                 placeholder="e.g., EpiPen, Benadryl"
                 className={`${getInputClass()} flex-1 mr-2`}
+                style={[getInputStyle(), { flex: 1, marginRight: 8 }]}
+                placeholderTextColor={placeholderColor}
                 {...getAccessibilityProps('Medication input', 'Enter medication name')}
               />
               <SafetyButton
@@ -431,7 +475,7 @@ export const EmergencyCardEditor: React.FC<EmergencyCardEditorProps> = ({
         </View>
 
         {/* Emergency Contacts */}
-        <View className="mb-6">
+  <View className="mb-6" style={(webStyles as any).section}>
           <Text className="text-gray-800 text-lg font-bold mb-4">Emergency Contacts</Text>
           
           {/* Primary Contact */}
@@ -445,6 +489,8 @@ export const EmergencyCardEditor: React.FC<EmergencyCardEditorProps> = ({
                 onChangeText={setEmergencyContact1Name}
                 placeholder="Contact name"
                 className={getInputClass()}
+                style={getInputStyle()}
+                placeholderTextColor={placeholderColor}
                 {...getAccessibilityProps('Primary contact name', '')}
               />
             </View>
@@ -459,6 +505,8 @@ export const EmergencyCardEditor: React.FC<EmergencyCardEditorProps> = ({
                 placeholder="Phone number"
                 keyboardType="phone-pad"
                 className={getInputClass(!!errors.emergency_contact_1_phone)}
+                style={getInputStyle(!!errors.emergency_contact_1_phone)}
+                placeholderTextColor={placeholderColor}
                 {...getAccessibilityProps('Primary contact phone', '')}
               />
               {errors.emergency_contact_1_phone && (
@@ -473,6 +521,8 @@ export const EmergencyCardEditor: React.FC<EmergencyCardEditorProps> = ({
                 onChangeText={setEmergencyContact1Relationship}
                 placeholder="e.g., Spouse, Parent"
                 className={getInputClass()}
+                style={getInputStyle()}
+                placeholderTextColor={placeholderColor}
                 {...getAccessibilityProps('Primary contact relationship', '')}
               />
             </View>
@@ -489,6 +539,8 @@ export const EmergencyCardEditor: React.FC<EmergencyCardEditorProps> = ({
                 onChangeText={setEmergencyContact2Name}
                 placeholder="Contact name"
                 className={getInputClass()}
+                style={getInputStyle()}
+                placeholderTextColor={placeholderColor}
               />
             </View>
 
@@ -500,6 +552,8 @@ export const EmergencyCardEditor: React.FC<EmergencyCardEditorProps> = ({
                 placeholder="Phone number"
                 keyboardType="phone-pad"
                 className={getInputClass()}
+                style={getInputStyle()}
+                placeholderTextColor={placeholderColor}
               />
             </View>
 
@@ -510,13 +564,15 @@ export const EmergencyCardEditor: React.FC<EmergencyCardEditorProps> = ({
                 onChangeText={setEmergencyContact2Relationship}
                 placeholder="e.g., Friend, Doctor"
                 className={getInputClass()}
+                style={getInputStyle()}
+                placeholderTextColor={placeholderColor}
               />
             </View>
           </View>
         </View>
 
         {/* Medical Information */}
-        <View className="mb-6">
+  <View className="mb-6" style={(webStyles as any).section}>
           <Text className="text-gray-800 text-lg font-bold mb-4">Medical Information</Text>
           
           <View className="mb-4">
@@ -526,6 +582,8 @@ export const EmergencyCardEditor: React.FC<EmergencyCardEditorProps> = ({
               onChangeText={setDoctorName}
               placeholder="Primary doctor or allergist"
               className={getInputClass()}
+              style={getInputStyle()}
+              placeholderTextColor={placeholderColor}
             />
           </View>
 
@@ -537,6 +595,8 @@ export const EmergencyCardEditor: React.FC<EmergencyCardEditorProps> = ({
               placeholder="Doctor's phone number"
               keyboardType="phone-pad"
               className={getInputClass()}
+              style={getInputStyle()}
+              placeholderTextColor={placeholderColor}
             />
           </View>
 
@@ -547,6 +607,8 @@ export const EmergencyCardEditor: React.FC<EmergencyCardEditorProps> = ({
               onChangeText={setInsuranceInfo}
               placeholder="Insurance provider and member ID"
               className={getInputClass()}
+              style={getInputStyle()}
+              placeholderTextColor={placeholderColor}
               multiline
               numberOfLines={2}
             />
@@ -559,6 +621,8 @@ export const EmergencyCardEditor: React.FC<EmergencyCardEditorProps> = ({
               onChangeText={setAdditionalNotes}
               placeholder="Any other important medical information"
               className={getInputClass()}
+              style={getInputStyle()}
+              placeholderTextColor={placeholderColor}
               multiline
               numberOfLines={3}
             />
@@ -566,9 +630,51 @@ export const EmergencyCardEditor: React.FC<EmergencyCardEditorProps> = ({
         </View>
 
         {/* Settings */}
-        <View className="mb-8">
+  <View className="mb-8" style={(webStyles as any).section}>
           <Text className="text-gray-800 text-lg font-bold mb-4">Settings</Text>
           
+          {/* Card Language */}
+          <View className="bg-gray-50 p-4 rounded-lg mb-4">
+            <Text className="text-gray-800 font-semibold mb-2">Card Language</Text>
+            {Platform.OS === 'web' ? (
+              <View style={getInputStyle() as any}>
+                <Picker
+                  selectedValue={cardLanguage}
+                  onValueChange={(v) => setCardLanguage(String(v))}
+                  dropdownIconColor="#374151"
+                  style={{ height: 36 }}
+                >
+                  <Picker.Item label="English" value="en" />
+                  <Picker.Item label="Español" value="es" />
+                  <Picker.Item label="Français" value="fr" />
+                </Picker>
+              </View>
+            ) : (
+              <View className="flex-row flex-wrap">
+                {[
+                  { code: 'en', label: 'English' },
+                  { code: 'es', label: 'Español' },
+                  { code: 'fr', label: 'Français' },
+                ].map((lang) => (
+                  <Pressable
+                    key={lang.code}
+                    onPress={() => setCardLanguage(lang.code)}
+                    className={`px-3 py-2 rounded-lg mr-2 mb-2 border ${
+                      cardLanguage === lang.code ? 'bg-blue-100 border-blue-400' : 'bg-white border-gray-300'
+                    }`}
+                    {...getAccessibilityProps(`Select ${lang.label}`, '', 'button')}
+                  >
+                    <Text className={`text-sm font-medium ${
+                      cardLanguage === lang.code ? 'text-blue-800' : 'text-gray-700'
+                    }`}>
+                      {lang.label}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
+          </View>
+
           <View className="flex-row items-center justify-between bg-gray-50 p-4 rounded-lg">
             <View className="flex-1">
               <Text className="text-gray-800 font-semibold">Active Card</Text>

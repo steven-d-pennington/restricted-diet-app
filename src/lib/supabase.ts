@@ -20,15 +20,27 @@ const supabaseStorageAdapter = {
 
 // Environment variables validation
 // Prefer Expo public env vars on web; fall back to plain vars for native/dev
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
+const baseSupabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY
+// Optional override for real devices (iOS/Android) so we don't try to hit localhost from a phone
+const deviceSupabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_DEVICE_URL
 
-if (!supabaseUrl) {
+if (!baseSupabaseUrl) {
   throw new Error('Missing SUPABASE_URL environment variable')
 }
 
 if (!supabaseAnonKey) {
   throw new Error('Missing SUPABASE_ANON_KEY environment variable')
+}
+
+// Resolve the final URL depending on platform
+let supabaseUrl = baseSupabaseUrl
+if (!PlatformUtils.isWeb) {
+  if (deviceSupabaseUrl) {
+    supabaseUrl = deviceSupabaseUrl
+  } else if (/^https?:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/i.test(baseSupabaseUrl)) {
+    console.warn('[supabase] The configured SUPABASE_URL points to localhost, which is not reachable from a physical device. Set EXPO_PUBLIC_SUPABASE_DEVICE_URL in your .env to a LAN IP (e.g., http://192.168.x.x:54321) or use a hosted Supabase URL.')
+  }
 }
 
 /**

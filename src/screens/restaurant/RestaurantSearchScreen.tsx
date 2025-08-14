@@ -160,7 +160,8 @@ export const RestaurantSearchScreen: React.FC<RestaurantSearchScreenProps> = ({
   }, [])
 
   const handleShowEmergencyCard = useCallback(() => {
-    navigation.navigate('EmergencyQuickAccess')
+    // Navigate to the Emergency tab; quick access can be opened from there
+    navigation.getParent()?.navigate('Emergency')
   }, [navigation])
 
   // User's dietary restrictions for quick filtering

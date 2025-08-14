@@ -91,9 +91,9 @@ export function DesignSystemDemo() {
               Different sizes:
             </Text>
             <View className="flex-row flex-wrap gap-2 mb-4">
-              <SafetyBadge status="safe" size="sm" />
-              <SafetyBadge status="danger" size="md" />
-              <SafetyBadge status="caution" size="lg" />
+              <SafetyBadge level="safe" status="safe" size="small" />
+              <SafetyBadge level="danger" status="danger" size="medium" />
+              <SafetyBadge level="caution" status="caution" size="large" />
             </View>
             
             <Text className="text-sm font-medium text-text-secondary mb-3">
@@ -101,7 +101,7 @@ export function DesignSystemDemo() {
             </Text>
             <View className="flex-row flex-wrap gap-2">
               {safetyStatuses.map((status) => (
-                <SafetyBadge key={status} status={status} />
+                <SafetyBadge key={status} status={status} level={status === 'danger' ? 'danger' : status === 'caution' ? 'caution' : status === 'safe' ? 'safe' : 'caution'} />
               ))}
             </View>
           </View>

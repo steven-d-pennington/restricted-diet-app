@@ -10,10 +10,10 @@ import { View, Text, FlatList, RefreshControl, Pressable, Alert } from 'react-na
 import {
   RestaurantReviewWithDetails,
   ReviewFilterOptions,
-  ReviewSearchResult,
   ReviewCategory,
   ReviewVerificationLevel
 } from '../../types/database.types'
+import type { ReviewSearchResult } from '../../services/reviewService'
 import ReviewCard from './ReviewCard'
 import ReviewFilters from './ReviewFilters'
 import ReviewService from '../../services/reviewService'

@@ -43,9 +43,9 @@ export const ForgotPasswordScreen: React.FC<Props> = ({ navigation }) => {
     setIsSubmitting(true)
     
     try {
-      const result = await resetPassword(email.trim().toLowerCase())
+  const result = await resetPassword(email.trim().toLowerCase())
       
-      if (result.success) {
+  if (!result.error) {
         setEmailSent(true)
       } else {
         Alert.alert(

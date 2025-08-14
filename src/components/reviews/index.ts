@@ -26,9 +26,8 @@ export type {
   RestaurantReviewWithDetails,
   ReviewWithCommunityData,
   ReviewFilterOptions,
-  ReviewCreationData,
   ReviewInteractionSummary,
-  SafetyIncidentReport,
+  SafetyIncidentReport as SafetyIncidentReportData,
   ReviewTemplate,
   ReviewTemplateStructure,
   ReviewNotificationData

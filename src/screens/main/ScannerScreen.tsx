@@ -97,7 +97,7 @@ export const ScannerScreen: React.FC<Props> = ({ navigation }) => {
         'Failed to process barcode. Please try again or enter product information manually.',
         [
           { text: 'Try Again', onPress: () => resetScanner() },
-          { text: 'Manual Entry', onPress: () => navigation.navigate('ManualEntry', { barcode }) }
+          { text: 'Manual Entry', onPress: () => navigation.navigate({ name: 'ManualEntry', params: { barcode } }) }
         ]
       )
     } finally {
@@ -111,14 +111,14 @@ export const ScannerScreen: React.FC<Props> = ({ navigation }) => {
       'Camera Error',
       error,
       [
-        { text: 'OK', onPress: () => resetScanner() },
-        { text: 'Manual Entry', onPress: () => navigation.navigate('ManualEntry') }
+  { text: 'OK', onPress: () => resetScanner() },
+  { text: 'Manual Entry', onPress: () => navigation.navigate({ name: 'ManualEntry', params: {} }) }
       ]
     )
   }, [navigation, resetScanner])
 
   const handleManualEntry = () => {
-    navigation.navigate('ManualEntry')
+  navigation.navigate({ name: 'ManualEntry', params: {} })
   }
 
   const handleEmergencyAccess = () => {

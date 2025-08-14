@@ -141,7 +141,7 @@ const RestaurantStackNavigator: React.FC = () => {
         component={RestaurantDetailScreen}
         options={{ 
           title: 'Restaurant Details',
-          headerBackTitleVisible: false
+          // headerBackTitleVisible not supported in current native stack types
         }}
       />
       <RestaurantStack.Screen 

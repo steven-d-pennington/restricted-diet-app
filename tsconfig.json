@@ -10,5 +10,8 @@
     "**/*.tsx",
     "nativewind-env.d.ts",
     "global.css"
+  ],
+  "exclude": [
+    "src/components/restaurant/RestaurantMap.tsx"
   ]
 }

@@ -10,22 +10,28 @@ import { View, Text, ActivityIndicator, StyleSheet } from 'react-native'
 
 interface LoadingScreenProps {
   message?: string
+  title?: string
+  subtitle?: string
 }
 
 export const LoadingScreen: React.FC<LoadingScreenProps> = ({ 
-  message = 'Loading your safety profile...' 
+  message,
+  title,
+  subtitle,
 }) => {
+  const finalTitle = title || 'Loading'
+  const finalMessage = message || subtitle || 'Loading your safety profile...'
   return (
     <View style={styles.container}>
       <View style={styles.content}>
         <Text style={styles.logo}>🛡️</Text>
-        <Text style={styles.appName}>Restricted Diet</Text>
+        <Text style={styles.appName}>{finalTitle}</Text>
         <ActivityIndicator 
           size="large" 
           color="#E53E3E" 
           style={styles.spinner}
         />
-        <Text style={styles.message}>{message}</Text>
+  <Text style={styles.message}>{finalMessage}</Text>
       </View>
     </View>
   )

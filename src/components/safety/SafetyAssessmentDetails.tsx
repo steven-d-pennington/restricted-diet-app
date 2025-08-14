@@ -9,8 +9,7 @@ import React, { useState, useEffect } from 'react'
 import { View, Text, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { SafetyLevel } from '../../types/database.types'
-import { SafetyAssessmentResult } from '../../services/safetyAssessmentService'
-import SafetyAssessmentAPI, { RestaurantSafetyOverview } from '../../services/safetyAssessmentAPI'
+import SafetyAssessmentAPI, { RestaurantSafetyOverview, SafetyAssessmentResult } from '../../services/safetyAssessmentAPI'
 
 interface SafetyAssessmentDetailsProps {
   restaurantId: string
@@ -162,9 +161,9 @@ const SafetyAssessmentDetails: React.FC<SafetyAssessmentDetailsProps> = ({
               </Text>
             </View>
             <View className="items-center flex-1">
-              <Text className="text-xs text-gray-500">Data Sources</Text>
+              <Text className="text-xs text-gray-500">Last Updated</Text>
               <Text className="text-sm font-medium text-gray-900">
-                {Object.values(assessment.data_sources).filter(v => typeof v === 'number' && v > 0).length}
+                {new Date(overview.last_updated).toLocaleDateString()}
               </Text>
             </View>
           </View>
@@ -227,188 +226,53 @@ const SafetyAssessmentDetails: React.FC<SafetyAssessmentDetailsProps> = ({
 
   const renderBreakdownTab = () => {
     if (!assessment) return null
-
-    const breakdown = assessment.score_breakdown
-    
+    const freshnessScore = overview
+      ? Math.max(0, 100 - Math.min(overview.data_freshness_days, 30) / 30 * 100)
+      : 0
     return (
       <ScrollView className="flex-1 p-4">
         <View className="bg-white rounded-xl p-4 shadow-sm">
           <Text className="text-lg font-bold text-gray-900 mb-4">Score Breakdown</Text>
-          
-          {renderScoreBar(breakdown.staff_training_score, 'Staff Training', 25)}
-          {renderScoreBar(breakdown.kitchen_protocols_score, 'Kitchen Protocols', 20)}
-          {renderScoreBar(breakdown.equipment_safety_score, 'Equipment Safety', 15)}
-          {renderScoreBar(breakdown.cross_contamination_prevention_score, 'Cross-Contamination Prevention', 20)}
-          {renderScoreBar(breakdown.ingredient_tracking_score, 'Ingredient Tracking', 15)}
-          {renderScoreBar(breakdown.emergency_preparedness_score, 'Emergency Preparedness', 10)}
-          {renderScoreBar(breakdown.health_department_score, 'Health Department Compliance', 5)}
-          {renderScoreBar(breakdown.certification_score, 'Certifications', 3)}
-          {renderScoreBar(breakdown.community_verification_score, 'Community Verification', 5)}
-          {renderScoreBar(breakdown.expert_assessment_score, 'Expert Assessment', 10)}
-          
-          {breakdown.incident_history_impact < 0 && (
-            <View className="mt-4 p-3 bg-red-50 border border-red-200 rounded">
-              <Text className="text-sm font-medium text-red-800 mb-1">Incident History Impact</Text>
-              <Text className="text-sm text-red-600">
-                {breakdown.incident_history_impact.toFixed(1)} points deducted due to past incidents
-              </Text>
-            </View>
-          )}
-
-          <View className="mt-4 pt-4 border-t border-gray-200">
-            <Text className="text-sm font-medium text-gray-700 mb-2">Score Calculation:</Text>
-            <Text className="text-xs text-gray-600 mb-1">
-              Raw Score: {breakdown.raw_total_score.toFixed(1)}/100
-            </Text>
-            <Text className="text-xs text-gray-600 mb-1">
-              Severity Adjusted: {breakdown.severity_adjusted_score.toFixed(1)}/100
-            </Text>
-            <Text className="text-xs text-gray-600">
-              Final Score: {breakdown.confidence_weighted_score.toFixed(1)}/100
-            </Text>
-          </View>
+          {renderScoreBar(assessment.overall_safety_score, 'Overall Safety', 100)}
+          {renderScoreBar(assessment.confidence_score, 'Confidence', 100)}
+          {renderScoreBar(freshnessScore, 'Data Freshness', 100)}
         </View>
       </ScrollView>
     )
   }
 
   const renderSourcesTab = () => {
-    if (!assessment) return null
-
-    const sources = assessment.data_sources
-    
+    if (!overview) return null
     return (
       <ScrollView className="flex-1 p-4">
         <View className="bg-white rounded-xl p-4 shadow-sm">
           <Text className="text-lg font-bold text-gray-900 mb-4">Data Sources</Text>
-          
           <View className="space-y-3">
             <View className="flex-row justify-between items-center py-2 border-b border-gray-100">
-              <Text className="text-sm text-gray-600">Safety Protocols</Text>
-              <Text className="text-sm font-medium text-gray-900">{sources.safety_protocols_count}</Text>
+              <Text className="text-sm text-gray-600">Expert Verified</Text>
+              <Text className="text-sm font-medium text-gray-900">{overview.expert_verified ? 'Yes' : 'No'}</Text>
             </View>
-            
-            <View className="flex-row justify-between items-center py-2 border-b border-gray-100">
-              <Text className="text-sm text-gray-600">Expert Assessments</Text>
-              <Text className="text-sm font-medium text-gray-900">{sources.expert_assessments_count}</Text>
-            </View>
-            
-            <View className="flex-row justify-between items-center py-2 border-b border-gray-100">
-              <Text className="text-sm text-gray-600">Community Verifications</Text>
-              <Text className="text-sm font-medium text-gray-900">{sources.community_verifications_count}</Text>
-            </View>
-            
-            <View className="flex-row justify-between items-center py-2 border-b border-gray-100">
-              <Text className="text-sm text-gray-600">Health Inspections</Text>
-              <Text className="text-sm font-medium text-gray-900">{sources.health_inspections_count}</Text>
-            </View>
-            
-            <View className="flex-row justify-between items-center py-2 border-b border-gray-100">
-              <Text className="text-sm text-gray-600">Certifications</Text>
-              <Text className="text-sm font-medium text-gray-900">{sources.certifications_count}</Text>
-            </View>
-            
-            <View className="flex-row justify-between items-center py-2 border-b border-gray-100">
-              <Text className="text-sm text-gray-600">Incident Reports</Text>
-              <Text className="text-sm font-medium text-gray-900">{sources.incident_reports_count}</Text>
-            </View>
-            
             <View className="flex-row justify-between items-center py-2">
-              <Text className="text-sm text-gray-600">Review Safety Assessments</Text>
-              <Text className="text-sm font-medium text-gray-900">{sources.review_safety_assessments_count}</Text>
+              <Text className="text-sm text-gray-600">Data Freshness</Text>
+              <Text className="text-sm font-medium text-gray-900">{overview.data_freshness_days} days</Text>
             </View>
           </View>
-
           <View className="mt-4 pt-4 border-t border-gray-200">
             <Text className="text-sm font-medium text-gray-700 mb-2">Data Freshness</Text>
-            <Text className="text-xs text-gray-600">
-              Latest data is {sources.data_freshness_days} days old
-            </Text>
-            {sources.last_expert_assessment_date && (
-              <Text className="text-xs text-gray-600 mt-1">
-                Last expert assessment: {new Date(sources.last_expert_assessment_date).toLocaleDateString()}
-              </Text>
-            )}
-            {sources.last_incident_date && (
-              <Text className="text-xs text-gray-600 mt-1">
-                Last incident: {new Date(sources.last_incident_date).toLocaleDateString()}
-              </Text>
-            )}
+            <Text className="text-xs text-gray-600">Latest data is {overview.data_freshness_days} days old</Text>
           </View>
         </View>
       </ScrollView>
     )
   }
 
-  const renderRecommendationsTab = () => {
-    if (!assessment || !assessment.recommendations.length) {
-      return (
-        <View className="flex-1 items-center justify-center p-4">
-          <Ionicons name="checkmark-circle" size={48} color="#10B981" />
-          <Text className="text-lg font-medium text-gray-900 mt-4 text-center">
-            No specific recommendations
-          </Text>
-          <Text className="text-sm text-gray-600 mt-2 text-center">
-            This restaurant appears to meet current safety standards
-          </Text>
-        </View>
-      )
-    }
-
-    return (
-      <ScrollView className="flex-1 p-4">
-        {assessment.recommendations.map((rec, index) => {
-          const priorityColor = rec.priority === 'critical' ? '#DC2626' :
-                               rec.priority === 'high' ? '#EF4444' :
-                               rec.priority === 'medium' ? '#F59E0B' : '#6B7280'
-          
-          return (
-            <View key={index} className="bg-white rounded-xl p-4 mb-4 shadow-sm">
-              <View className="flex-row items-center mb-2">
-                <View 
-                  className="px-2 py-1 rounded-full mr-3"
-                  style={{ backgroundColor: priorityColor + '20' }}
-                >
-                  <Text 
-                    className="text-xs font-medium uppercase"
-                    style={{ color: priorityColor }}
-                  >
-                    {rec.priority}
-                  </Text>
-                </View>
-                <Text className="flex-1 text-sm font-medium text-gray-900">
-                  {rec.category}
-                </Text>
-              </View>
-              
-              <Text className="text-sm text-gray-700 mb-3">
-                {rec.recommendation}
-              </Text>
-              
-              <View className="flex-row justify-between items-center">
-                <View>
-                  <Text className="text-xs text-gray-500">Impact: +{rec.impact_on_score} points</Text>
-                  <Text className="text-xs text-gray-500">Timeline: {rec.estimated_timeline}</Text>
-                </View>
-                <View 
-                  className="px-2 py-1 rounded"
-                  style={{ 
-                    backgroundColor: rec.implementation_complexity === 'easy' ? '#10B981' :
-                                    rec.implementation_complexity === 'moderate' ? '#F59E0B' : '#EF4444',
-                    opacity: 0.2
-                  }}
-                >
-                  <Text className="text-xs font-medium text-gray-700">
-                    {rec.implementation_complexity}
-                  </Text>
-                </View>
-              </View>
-            </View>
-          )
-        })}
-      </ScrollView>
-    )
-  }
+  const renderRecommendationsTab = () => (
+    <View className="flex-1 items-center justify-center p-4">
+      <Ionicons name="checkmark-circle" size={48} color="#10B981" />
+      <Text className="text-lg font-medium text-gray-900 mt-4 text-center">No specific recommendations</Text>
+      <Text className="text-sm text-gray-600 mt-2 text-center">This restaurant appears to meet current safety standards</Text>
+    </View>
+  )
 
   if (loading) {
     return (

@@ -75,7 +75,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
     setIsSubmitting(true)
     
     try {
-      const result = await signUp(
+  const result = await signUp(
         formData.email.trim().toLowerCase(), 
         formData.password,
         {
@@ -84,7 +84,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
         }
       )
       
-      if (!result.success) {
+  if (result.error) {
         Alert.alert(
           'Registration Failed', 
           result.error?.message || 'Unable to create account. Please try again.'

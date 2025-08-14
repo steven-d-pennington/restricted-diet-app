@@ -12,7 +12,7 @@ import LocationService from '../services/locationService'
 import { useUserProfile } from './useUserProfile'
 import {
   RestaurantSearchParams,
-  RestaurantSearchResult,
+  
   RestaurantWithSafetyInfo,
   RestaurantWithReviews,
   MenuItemWithSafety,
@@ -56,8 +56,8 @@ export const useRestaurantSearch = (
   })
 
   const [currentParams, setCurrentParams] = useState<RestaurantSearchParams | null>(null)
-  const { profile } = useUserProfile()
-  const searchTimeoutRef = useRef<NodeJS.Timeout>()
+  const { userProfile } = useUserProfile()
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Get user's dietary restrictions for safety assessment
   const getUserRestrictions = useCallback(async (): Promise<string[]> => {
@@ -457,7 +457,7 @@ export const useNearbyRestaurants = (autoSearch: boolean = true) => {
  * Hook for restaurant safety assessment
  */
 export const useRestaurantSafety = (restaurantId: string) => {
-  const [safetyAssessment, setSafetyAssessment] = useState(null)
+  const [safetyAssessment, setSafetyAssessment] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 

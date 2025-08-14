@@ -406,7 +406,7 @@ class RestaurantService {
         warning_restrictions: warning,
         dangerous_restrictions: dangerous,
         safety_score: safetyScore,
-        verification_status,
+  verification_status: verificationStatus,
         last_assessment_date: new Date().toISOString()
       }
 

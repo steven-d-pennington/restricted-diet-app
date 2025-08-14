@@ -39,7 +39,7 @@ export function safeImport<T>(importFn: () => T): T | null {
  * Platform-specific component wrapper
  * Renders different components based on platform
  */
-interface PlatformSpecificProps<T = any> {
+interface PlatformSpecificProps<T extends {} = {}> {
   web?: React.ComponentType<T> | React.ReactElement | null
   native?: React.ComponentType<T> | React.ReactElement | null
   ios?: React.ComponentType<T> | React.ReactElement | null
@@ -48,7 +48,7 @@ interface PlatformSpecificProps<T = any> {
   props?: T
 }
 
-export function PlatformSpecific<T = any>({
+export function PlatformSpecific<T extends {} = {}>({
   web,
   native,
   ios,
@@ -83,7 +83,7 @@ export function PlatformSpecific<T = any>({
 
   // If it's a component, render it with props
   if (typeof Component === 'function') {
-    return React.createElement(Component, props)
+    return React.createElement(Component as React.ComponentType<{}>, props as {})
   }
 
   return null
@@ -131,7 +131,7 @@ export const WebFallbacks = {
     if (options.onChange) {
       input.onchange = (event) => {
         const target = event.target as HTMLInputElement
-        options.onChange(target.files)
+        options.onChange?.(target.files)
       }
     }
     

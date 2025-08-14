@@ -21,7 +21,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { SafetyBadge } from '../../components/SafetyBadge'
 import { SafetyCard } from '../../components/SafetyCard'
 import { SafetyButton } from '../../components/SafetyButton'
-import { useAuthContext } from '../../contexts/AuthContext'
+import { useAuth } from '../../contexts/AuthContext'
 
 interface SafetyIncidentReportScreenProps {
   navigation: any
@@ -54,7 +54,7 @@ export const SafetyIncidentReportScreen: React.FC<SafetyIncidentReportScreenProp
   route
 }) => {
   const { restaurantId, restaurantName, incidentType } = route.params
-  const { user } = useAuthContext()
+  const { user } = useAuth()
   
   const [report, setReport] = useState<IncidentReport>({
     incidentType: incidentType || 'exposure',
@@ -209,7 +209,7 @@ export const SafetyIncidentReportScreen: React.FC<SafetyIncidentReportScreenProp
           {severity.label}
         </Text>
         {severity.id === 'emergency' && (
-          <SafetyBadge level="danger" size="sm" text="CRITICAL" />
+          <SafetyBadge level="danger" size="small" text="CRITICAL" />
         )}
       </View>
       <Text className="text-gray-600 text-sm">{severity.description}</Text>

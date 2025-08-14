@@ -156,7 +156,7 @@ export const BarcodeCamera: React.FC<BarcodeCameraProps> = ({
   const toggleFlash = () => {
     if (!FlashMode) return
     
-    setFlashMode(prev => 
+  setFlashMode((prev: any) => 
       prev === FlashMode.off ? FlashMode.torch : FlashMode.off
     )
   }

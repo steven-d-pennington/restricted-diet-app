@@ -205,7 +205,7 @@ export class FamilyMemberService extends BaseService<FamilyMember> {
       }
     }
 
-    return this.create(data)
+  return this.create(data as Omit<FamilyMember, 'id' | 'created_at' | 'updated_at'>)
   }
 
   /**
@@ -391,7 +391,7 @@ export class ProductService extends BaseService<Product> {
       return this.update(existingProduct.data.id, productData)
     } else {
       // Create new product
-      return this.create(productData)
+  return this.create(productData as Omit<Product, 'id' | 'created_at' | 'updated_at'>)
     }
   }
 
@@ -453,7 +453,7 @@ export class ProductSafetyService extends BaseService<ProductSafetyAssessment> {
       .single()
 
     if (productResponse.error || !productResponse.data) {
-      return handleSupabaseResponse({
+      return handleSupabaseResponse<ProductSafetyAssessment>({
         data: null,
         error: productResponse.error || { message: 'Product not found' }
       })

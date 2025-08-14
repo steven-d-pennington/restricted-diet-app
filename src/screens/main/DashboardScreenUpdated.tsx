@@ -56,7 +56,7 @@ export const DashboardScreenUpdated: React.FC<Props> = ({ navigation }) => {
           <SafetyCard
             title="Safety Profile Active"
             description="Your dietary restrictions are configured and ready"
-            status="safe"
+              status="safe"
             details={[
               "Profile configured with your restrictions",
               "Emergency contacts updated",
@@ -65,7 +65,7 @@ export const DashboardScreenUpdated: React.FC<Props> = ({ navigation }) => {
             onPress={handleViewRestrictions}
           >
             <View className="flex-row items-center justify-between">
-              <SafetyBadge status="safe" />
+                <SafetyBadge level="safe" />
               <Text className="text-xs text-text-tertiary">
                 Last updated: Today
               </Text>
@@ -91,7 +91,7 @@ export const DashboardScreenUpdated: React.FC<Props> = ({ navigation }) => {
                 <SafetyButton 
                   title="Scan Now" 
                   onPress={handleQuickScan}
-                  size="sm"
+                   size="small"
                   fullWidth
                 />
               </View>
@@ -109,7 +109,7 @@ export const DashboardScreenUpdated: React.FC<Props> = ({ navigation }) => {
                 <DangerButton 
                   title="Emergency" 
                   onPress={handleEmergencyCards}
-                  size="sm"
+                   size="small"
                   fullWidth
                 />
               </View>
@@ -127,7 +127,7 @@ export const DashboardScreenUpdated: React.FC<Props> = ({ navigation }) => {
               title="See All"
               onPress={handleRecentScans}
               variant="secondary"
-              size="sm"
+               size="small"
             />
           </View>
           

@@ -15,7 +15,7 @@ import { SafetyBadge } from '../../components/SafetyBadge'
 import { SafetyCard } from '../../components/SafetyCard'
 import { useFavoriteRestaurants } from '../../hooks/useRestaurants'
 import { useLocation } from '../../hooks/useLocation'
-import { useAuthContext } from '../../contexts/AuthContext'
+import { useAuth } from '../../contexts/AuthContext'
 import { RestaurantWithSafetyInfo } from '../../types/database.types'
 
 interface FavoriteRestaurantsScreenProps {
@@ -36,7 +36,7 @@ interface FavoriteNote {
 export const FavoriteRestaurantsScreen: React.FC<FavoriteRestaurantsScreenProps> = ({
   navigation
 }) => {
-  const { user } = useAuthContext()
+  const { user } = useAuth()
   const {
     favorites,
     loading,

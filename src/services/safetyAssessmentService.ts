@@ -1128,8 +1128,8 @@ class SafetyAssessmentService {
           overall_safety_score: result.overall_safety_score,
           confidence_score: result.confidence_score,
           safety_level: result.safety_level,
-          score_breakdown: result.score_breakdown as Json,
-          data_sources: result.data_sources as Json,
+          score_breakdown: (result.score_breakdown as unknown) as Json,
+          data_sources: (result.data_sources as unknown) as Json,
           calculation_timestamp: result.last_calculation,
           expires_at: result.expires_at,
           expert_override: result.expert_override
@@ -1834,8 +1834,9 @@ class SafetyAssessmentService {
       let totalConfidence = 0
       
       if (assessments) {
-        assessments.forEach(assessment => {
-          assessmentsByLevel[assessment.safety_level]++
+        assessments.forEach((assessment) => {
+          const level = assessment.safety_level as SafetyLevel
+          assessmentsByLevel[level]++
           totalConfidence += assessment.confidence_score
         })
       }

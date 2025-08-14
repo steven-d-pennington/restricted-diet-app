@@ -7,7 +7,7 @@ import React, { useState, useEffect } from 'react'
 import { View, Alert } from 'react-native'
 import { useAuth } from '../../contexts/AuthContext'
 import { useEmergencyCards } from '../../hooks/useEmergencyCards'
-import { useUserProfile } from '../../hooks/useUserProfile'
+import { useUserRestrictions } from '../../hooks/useUserProfile'
 import { EmergencyCardList } from '../../components/emergency/EmergencyCardList'
 import { EmergencyCardEditor } from '../../components/emergency/EmergencyCardEditor'
 import { EmergencyCardViewer } from '../../components/emergency/EmergencyCardViewer'
@@ -30,7 +30,7 @@ export const EmergencyCardManagementScreen: React.FC<EmergencyCardManagementScre
   onBack,
 }) => {
   const { user } = useAuth()
-  const { restrictions } = useUserProfile()
+  const { restrictions } = useUserRestrictions()
   
   const {
     emergencyCards,

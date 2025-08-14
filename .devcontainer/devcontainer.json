@@ -6,7 +6,7 @@
     "--env-file",
     ".env"
   ],
-  "postCreateCommand": "npm install -g expo-cli && npm install && supabase start",
+  "postCreateCommand": "npm install && npx -y supabase@latest start",
   "customizations": {
     "vscode": {
       "extensions": [

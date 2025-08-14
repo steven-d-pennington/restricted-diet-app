@@ -8,4 +8,5 @@
 export { RestaurantCard } from './RestaurantCard'
 export { RestaurantList, RestaurantListWithHeader } from './RestaurantList'
 export { RestaurantDetail } from './RestaurantDetail'
-export { RestaurantMap } from './RestaurantMap'
+// Native platforms will use the native map implementation
+export { RestaurantMap } from './RestaurantMap.native'

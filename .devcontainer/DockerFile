@@ -9,17 +9,29 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Supabase CLI
-RUN curl -fsSL https://deno.land/x/install/install.sh | sh && \
-    mv /root/.deno/bin/deno /usr/local/bin/deno && \
-    curl -fsSL https://github.com/supabase/cli/releases/latest/download/supabase_${TARGETARCH}_linux.tar.gz \
-    | tar -xz -C /usr/local/bin supabase
+# Install Supabase CLI via npm (more reliable across architectures)
+RUN npm install -g supabase
 
 # Set working directory
 WORKDIR /workspace
 
-# Install Expo CLI globally (will also be reinstalled in postCreateCommand)
-RUN npm install -g expo-cli
+# Non-root user (VS Code Dev Containers best practice)
+USER nodeFROM node:20-bullseye
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    unzip \
+    python3 \
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Supabase CLI via npm (more reliable across architectures)
+RUN npm install -g supabase
+
+# Set working directory
+WORKDIR /workspace
 
 # Non-root user (VS Code Dev Containers best practice)
 USER node

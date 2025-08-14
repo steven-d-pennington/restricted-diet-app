@@ -60,8 +60,8 @@ export const useBarcodeScanner = (): UseBarcodeScanner => {
   })
 
   const appStateRef = useRef(AppState.currentState)
-  const scanTimeoutRef = useRef<NodeJS.Timeout>()
-  const debounceRef = useRef<NodeJS.Timeout>()
+  const scanTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const debounceRef = useRef<NodeJS.Timeout | null>(null)
 
   // Update error from product service
   useEffect(() => {

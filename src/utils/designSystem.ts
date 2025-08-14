@@ -329,11 +329,13 @@ export function getTouchTargetClass(platform: 'ios' | 'android' | 'web' = 'ios')
 /**
  * Accessibility helper for screen readers
  */
+import type { AccessibilityRole, AccessibilityProps } from 'react-native';
+
 export function getAccessibilityProps(
   label: string,
   hint?: string,
-  role?: string
-) {
+  role?: AccessibilityRole
+): Pick<AccessibilityProps, 'accessibilityLabel' | 'accessibilityHint' | 'accessibilityRole' | 'accessible'> {
   return {
     accessibilityLabel: label,
     accessibilityHint: hint,

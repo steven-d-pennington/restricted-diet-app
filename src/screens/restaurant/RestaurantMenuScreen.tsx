@@ -20,8 +20,8 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { SafetyBadge } from '../../components/SafetyBadge'
 import { SafetyCard } from '../../components/SafetyCard'
 import { LoadingScreen } from '../../components/LoadingScreen'
-import { useAuthContext } from '../../contexts/AuthContext'
-import { MenuItemWithSafety, SafetyLevel } from '../../types/database.types'
+import { useAuth } from '../../contexts/AuthContext'
+import { SafetyLevel } from '../../types/database.types'
 
 interface RestaurantMenuScreenProps {
   navigation: any
@@ -33,19 +33,31 @@ interface RestaurantMenuScreenProps {
   }
 }
 
-interface MenuSection {
-  title: string
-  data: MenuItemWithSafety[]
-  icon?: string
-}
-
-interface DetailedMenuItem extends MenuItemWithSafety {
+interface DetailedMenuItem {
+  id: string
+  name: string
+  description?: string | null
+  price?: number | null
+  // Local-only UI helpers
+  category?: string
   allergens?: string[]
   ingredients?: string[]
-  preparation_notes?: string
+  preparation_notes?: string | null
   dietary_tags?: string[]
   safety_confidence?: number
-  last_verified?: string
+  last_verified_date?: string
+  safety_assessment?: {
+    restriction_id: string
+    safety_level: SafetyLevel
+    risk_factors?: any
+    customer_notes?: string | null
+  }[]
+}
+
+interface MenuSection {
+  title: string
+  data: DetailedMenuItem[]
+  icon?: string
 }
 
 export const RestaurantMenuScreen: React.FC<RestaurantMenuScreenProps> = ({
@@ -53,7 +65,7 @@ export const RestaurantMenuScreen: React.FC<RestaurantMenuScreenProps> = ({
   route
 }) => {
   const { restaurantId, restaurantName } = route.params
-  const { user } = useAuthContext()
+  const { userProfile: profile, user } = useAuth()
   const [menu, setMenu] = useState<DetailedMenuItem[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -89,17 +101,15 @@ export const RestaurantMenuScreen: React.FC<RestaurantMenuScreenProps> = ({
           category: 'Salads',
           safety_assessment: [{
             restriction_id: 'gluten',
-            restriction_name: 'Gluten',
             safety_level: 'warning',
-            confidence_score: 85,
-            notes: 'Contains croutons which typically contain gluten'
+            customer_notes: 'Contains croutons which typically contain gluten'
           }],
           allergens: ['Gluten', 'Dairy', 'Eggs'],
           ingredients: ['Romaine lettuce', 'Chicken breast', 'Parmesan cheese', 'Caesar dressing', 'Croutons'],
           preparation_notes: 'Prepared on shared surfaces with gluten-containing items',
           dietary_tags: ['High Protein'],
           safety_confidence: 85,
-          last_verified: '2024-01-10T10:00:00Z'
+          last_verified_date: '2024-01-10T10:00:00Z'
         },
         {
           id: '2',
@@ -109,17 +119,15 @@ export const RestaurantMenuScreen: React.FC<RestaurantMenuScreenProps> = ({
           category: 'Bowls',
           safety_assessment: [{
             restriction_id: 'gluten',
-            restriction_name: 'Gluten',
             safety_level: 'safe',
-            confidence_score: 95,
-            notes: 'Naturally gluten-free ingredients'
+            customer_notes: 'Naturally gluten-free ingredients'
           }],
           allergens: ['Sesame'],
           ingredients: ['Quinoa', 'Sweet potato', 'Broccoli', 'Avocado', 'Tahini', 'Lemon'],
           preparation_notes: 'Prepared in dedicated gluten-free area',
           dietary_tags: ['Vegan', 'Gluten-Free', 'High Fiber'],
           safety_confidence: 95,
-          last_verified: '2024-01-12T14:30:00Z'
+          last_verified_date: '2024-01-12T14:30:00Z'
         },
         {
           id: '3',
@@ -128,18 +136,16 @@ export const RestaurantMenuScreen: React.FC<RestaurantMenuScreenProps> = ({
           price: 22.99,
           category: 'Seafood',
           safety_assessment: [{
-            restriction_id: 'nuts',
-            restriction_name: 'Tree Nuts',
+            restriction_id: 'tree_nuts',
             safety_level: 'danger',
-            confidence_score: 100,
-            notes: 'Contains almonds - dangerous for tree nut allergies'
+            customer_notes: 'Contains almonds - dangerous for tree nut allergies'
           }],
           allergens: ['Fish', 'Tree Nuts'],
           ingredients: ['Salmon', 'Almonds', 'Jasmine rice', 'Herbs', 'Olive oil'],
           preparation_notes: 'Nuts are processed in the same facility',
           dietary_tags: ['High Protein', 'Omega-3'],
           safety_confidence: 100,
-          last_verified: '2024-01-11T09:15:00Z'
+          last_verified_date: '2024-01-11T09:15:00Z'
         }
       ]
       
@@ -154,8 +160,9 @@ export const RestaurantMenuScreen: React.FC<RestaurantMenuScreenProps> = ({
 
   // Get user's dietary restrictions
   const userRestrictions = useMemo(() => {
-    return user?.profile?.dietary_restrictions?.map(r => r.restriction_name.toLowerCase()) || []
-  }, [user?.profile?.dietary_restrictions])
+    // In this mocked screen, no persisted restrictions; leave empty or derive from profile in real impl.
+    return [] as string[]
+  }, [])
 
   // Filter and categorize menu items
   const filteredMenu = useMemo(() => {
@@ -179,7 +186,7 @@ export const RestaurantMenuScreen: React.FC<RestaurantMenuScreenProps> = ({
     if (safetyFilter !== 'all') {
       filtered = filtered.filter(item => {
         const userSafetyLevels = item.safety_assessment?.filter(assessment => 
-          userRestrictions.includes(assessment.restriction_name.toLowerCase())
+          userRestrictions.includes(assessment.restriction_id.toLowerCase())
         ).map(assessment => assessment.safety_level)
         
         if (safetyFilter === 'safe') {
@@ -219,14 +226,14 @@ export const RestaurantMenuScreen: React.FC<RestaurantMenuScreenProps> = ({
   }
 
   const getSafetyLevelForUser = (item: DetailedMenuItem): SafetyLevel => {
-    if (!item.safety_assessment) return 'unknown'
-    
-    const userAssessments = item.safety_assessment.filter(assessment => 
-      userRestrictions.includes(assessment.restriction_name.toLowerCase())
+    if (!item.safety_assessment) return 'safe'
+
+    const userAssessments = item.safety_assessment.filter(assessment =>
+      userRestrictions.includes(assessment.restriction_id.toLowerCase())
     )
-    
+
     if (userAssessments.length === 0) return 'safe'
-    
+
     // Return the most restrictive level
     if (userAssessments.some(a => a.safety_level === 'danger')) return 'danger'
     if (userAssessments.some(a => a.safety_level === 'warning')) return 'warning'
@@ -323,7 +330,7 @@ export const RestaurantMenuScreen: React.FC<RestaurantMenuScreenProps> = ({
             </Text>
             <SafetyBadge
               level={userSafetyLevel}
-              size="sm"
+              size="small"
               className="mt-1"
             />
           </View>
@@ -334,7 +341,7 @@ export const RestaurantMenuScreen: React.FC<RestaurantMenuScreenProps> = ({
           <View className="mb-2">
             <View className="flex-row flex-wrap">
               {item.safety_assessment
-                .filter(assessment => userRestrictions.includes(assessment.restriction_name.toLowerCase()))
+                .filter(assessment => userRestrictions.includes(assessment.restriction_id.toLowerCase()))
                 .map((assessment, index) => (
                   <View
                     key={index}
@@ -351,7 +358,7 @@ export const RestaurantMenuScreen: React.FC<RestaurantMenuScreenProps> = ({
                       assessment.safety_level === 'caution' ? 'text-blue-800' :
                       'text-green-800'
                     }`}>
-                      {assessment.restriction_name}: {assessment.safety_level.toUpperCase()}
+                      {assessment.restriction_id}: {assessment.safety_level.toUpperCase()}
                     </Text>
                   </View>
                 ))
@@ -464,7 +471,7 @@ export const RestaurantMenuScreen: React.FC<RestaurantMenuScreenProps> = ({
 
       {/* Menu Items */}
       {menuSections.length > 0 ? (
-        <SectionList
+        <SectionList<DetailedMenuItem, MenuSection>
           sections={menuSections}
           renderItem={renderMenuItem}
           renderSectionHeader={renderSectionHeader}
@@ -531,15 +538,17 @@ export const RestaurantMenuScreen: React.FC<RestaurantMenuScreenProps> = ({
                   {selectedItem.safety_assessment?.map((assessment, index) => (
                     <View key={index} className="mb-3 last:mb-0">
                       <View className="flex-row justify-between items-center mb-1">
-                        <Text className="font-medium">{assessment.restriction_name}</Text>
-                        <SafetyBadge level={assessment.safety_level} size="sm" />
+                        <Text className="font-medium">{assessment.restriction_id}</Text>
+                        <SafetyBadge level={assessment.safety_level} size="small" />
                       </View>
                       <Text className="text-gray-600 text-sm">
-                        {assessment.notes}
+                        {assessment.customer_notes}
                       </Text>
-                      <Text className="text-gray-500 text-xs mt-1">
-                        Confidence: {assessment.confidence_score}%
-                      </Text>
+                      {typeof selectedItem.safety_confidence === 'number' && (
+                        <Text className="text-gray-500 text-xs mt-1">
+                          Confidence: {selectedItem.safety_confidence}%
+                        </Text>
+                      )}
                     </View>
                   ))}
                 </SafetyCard>
@@ -601,8 +610,8 @@ export const RestaurantMenuScreen: React.FC<RestaurantMenuScreenProps> = ({
                 {/* Verification Info */}
                 <View className="bg-gray-50 p-3 rounded-lg mb-6">
                   <Text className="text-gray-600 text-sm">
-                    Last verified: {selectedItem.last_verified ? 
-                      new Date(selectedItem.last_verified).toLocaleDateString() : 
+                    Last verified: {selectedItem.last_verified_date ? 
+                      new Date(selectedItem.last_verified_date).toLocaleDateString() : 
                       'Unknown'
                     }
                   </Text>

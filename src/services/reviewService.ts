@@ -444,7 +444,7 @@ class ReviewService {
         total_count: count || reviews.length,
         has_more: (count || 0) > offset + limit,
         filters_applied: filters,
-        aggregated_stats
+  aggregated_stats: aggregatedStats
       }
 
     } catch (error: any) {
@@ -649,8 +649,7 @@ class ReviewService {
         // Check if current user has interacted
         if (user && interaction.user_id === user.id) {
           summary.user_interaction = {
-            type: interaction.interaction_type as any,
-            created_at: interaction.created_at
+            type: interaction.interaction_type as any
           }
         }
       }

@@ -9,23 +9,24 @@ import React, { useState, useEffect } from 'react'
 import { View, Text, ScrollView, Pressable, TextInput, Alert, Modal } from 'react-native'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import {
-  ReviewCreationData,
   ReviewTemplate,
   ReviewTemplateStructure,
   ReviewTemplateQuestion,
   ReviewCategory,
   PhotoEvidenceType,
-  SafetyIncidentReport,
   DietaryRestriction
 } from '../../types/database.types'
+import type { ReviewCreationData } from '../../services/reviewService'
+import type { SafetyIncidentReport as SafetyIncidentReportData } from '../../types/database.types'
 import ReviewService from '../../services/reviewService'
 import ReviewTemplateService from '../../services/reviewTemplateService'
 import PhotoService from '../../services/photoService'
 import SafetyIncidentReport from '../../components/reviews/SafetyIncidentReport'
+import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
-import { MainStackParamList } from '../../types/navigation.types'
+import { MainTabParamList } from '../../types/navigation.types'
 
-type Props = NativeStackScreenProps<MainStackParamList, 'CreateReview'>
+type Props = NativeStackScreenProps<any>
 
 interface QuestionResponse {
   questionId: string
@@ -34,7 +35,7 @@ interface QuestionResponse {
 }
 
 export default function CreateReviewScreen({ route, navigation }: Props) {
-  const { restaurantId, restaurantName } = route.params
+  const { restaurantId, restaurantName } = (route?.params as any) || {}
   const { user } = useAuth()
   
   const [loading, setLoading] = useState(false)
@@ -66,7 +67,7 @@ export default function CreateReviewScreen({ route, navigation }: Props) {
   
   // Incident reporting
   const [showIncidentReport, setShowIncidentReport] = useState(false)
-  const [incidentData, setIncidentData] = useState<Partial<SafetyIncidentReport> | null>(null)
+  const [incidentData, setIncidentData] = useState<Partial<SafetyIncidentReportData> | null>(null)
 
   const totalSteps = selectedTemplate ? 4 : 3
 
@@ -160,7 +161,7 @@ export default function CreateReviewScreen({ route, navigation }: Props) {
     setShowIncidentReport(true)
   }
 
-  const handleIncidentSubmit = (incident: SafetyIncidentReport) => {
+  const handleIncidentSubmit = (incident: SafetyIncidentReportData) => {
     setIncidentData(incident)
     setShowIncidentReport(false)
     // Update review data to reflect incident
@@ -219,18 +220,18 @@ export default function CreateReviewScreen({ route, navigation }: Props) {
       // Prepare photo uploads
       const photoUploads = selectedPhotos.map(photo => ({
         file: photo.file,
-        photoType: photo.type,
+        photo_type: photo.type,
         caption: photo.caption
       }))
 
       // Create complete review data
-      const completeReviewData: ReviewCreationData = {
+  const completeReviewData: ReviewCreationData = {
         ...reviewData,
         template_id: selectedTemplate?.id,
         template_responses: templateResponseData,
         photos: photoUploads,
         incident_report: incidentData || undefined
-      } as ReviewCreationData
+  } as ReviewCreationData
 
       const review = await ReviewService.createReview(completeReviewData)
 
@@ -303,7 +304,7 @@ export default function CreateReviewScreen({ route, navigation }: Props) {
       return renderBasicReview()
     }
 
-    const structure = selectedTemplate.template_structure as ReviewTemplateStructure
+  const structure = selectedTemplate.template_structure as unknown as ReviewTemplateStructure
 
     return (
       <View className="flex-1">

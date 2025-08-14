@@ -6,15 +6,15 @@
  */
 
 import React from 'react';
-import { TouchableOpacity, Text, View, ActivityIndicator } from 'react-native';
+import { TouchableOpacity, Text, View, ActivityIndicator, ViewStyle } from 'react-native';
 import { useButtonClasses, getTouchTargetClass, getAccessibilityProps } from '../utils/designSystem';
 import type { ComponentVariant, ComponentSize } from '../utils/designSystem';
 
 interface SafetyButtonProps {
   title: string;
-  onPress: () => void;
+  onPress?: () => void;
   variant?: ComponentVariant;
-  size?: ComponentSize;
+  size?: ComponentSize | 'small' | 'medium' | 'large';
   disabled?: boolean;
   loading?: boolean;
   icon?: React.ReactNode;
@@ -22,6 +22,7 @@ interface SafetyButtonProps {
   fullWidth?: boolean;
   outline?: boolean;
   className?: string;
+  style?: ViewStyle;
   testID?: string;
   accessibilityHint?: string;
 }
@@ -38,15 +39,22 @@ export function SafetyButton({
   fullWidth = false,
   outline = false,
   className = '',
+  style,
   testID,
   accessibilityHint
 }: SafetyButtonProps) {
   const { getButtonClass, getOutlineButtonClass } = useButtonClasses();
   const touchTargetClass = getTouchTargetClass();
+  const normalizedSize: ComponentSize = ((): ComponentSize => {
+    if (size === 'small') return 'sm';
+    if (size === 'medium') return 'md';
+    if (size === 'large') return 'lg';
+    return size as ComponentSize;
+  })();
   
   const buttonClass = outline 
-    ? getOutlineButtonClass(variant, size)
-    : getButtonClass(variant, size);
+    ? getOutlineButtonClass(variant, normalizedSize)
+    : getButtonClass(variant, normalizedSize);
   
   const finalClass = `${buttonClass} ${fullWidth ? 'w-full' : ''} ${disabled || loading ? 'opacity-50' : ''} ${className}`;
   
@@ -62,9 +70,10 @@ export function SafetyButton({
   
   return (
     <TouchableOpacity
-      onPress={onPress}
+  onPress={onPress}
       disabled={isDisabled}
       className={`${finalClass} ${touchTargetClass}`}
+  style={style}
       testID={testID}
       {...accessibilityProps}
       accessibilityState={{ 

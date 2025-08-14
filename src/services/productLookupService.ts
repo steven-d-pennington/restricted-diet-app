@@ -326,7 +326,7 @@ class ProductLookupService {
     }
 
     // This would be stored in database, but for now return a mock product
-    return {
+  return {
       id: `temp-${Date.now()}`,
       ...productData,
       subcategory: null,
@@ -337,7 +337,7 @@ class ProductLookupService {
       certification_labels: null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-    }
+  } as Product
   }
 
   /**
@@ -420,8 +420,10 @@ class ProductLookupService {
 
     // Clean old cache entries (keep only last 100)
     if (this.cache.size > 100) {
-      const oldestKey = this.cache.keys().next().value
-      this.cache.delete(oldestKey)
+      const oldestKey = this.cache.keys().next().value as string | undefined
+      if (oldestKey) {
+        this.cache.delete(oldestKey)
+      }
     }
   }
 

@@ -16,6 +16,7 @@ import {
   ActivityIndicator,
   Alert,
   Dimensions,
+  RefreshControl,
 } from 'react-native'
 import { useFocusEffect } from '@react-navigation/native'
 import { ScannerStackScreenProps } from '../../types/navigation.types'
@@ -329,8 +330,7 @@ export const ScanResultScreen: React.FC<Props> = ({ navigation, route }) => {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
-        refreshing={refreshing}
-        onRefresh={handleRefresh}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
       >
         {renderSafetyHeader()}
         {renderProductInfo()}

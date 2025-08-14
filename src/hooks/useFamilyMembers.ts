@@ -247,7 +247,9 @@ export const useFamilyMembers = (): UseFamilyMembersReturn => {
         is_active: true
       }
 
-      const response = await familyMemberService.supabase
+      // Use direct Supabase client for restrictions table since service is for family_members
+      const { supabase } = await import('../lib/supabase')
+      const response = await supabase
         .from('family_member_restrictions')
         .insert(restrictionData)
         .select()
@@ -283,7 +285,8 @@ export const useFamilyMembers = (): UseFamilyMembersReturn => {
 
     setLoadingState(true)
     try {
-      const response = await familyMemberService.supabase
+      const { supabase } = await import('../lib/supabase')
+      const response = await supabase
         .from('family_member_restrictions')
         .update(updates)
         .eq('id', restrictionId)
@@ -318,7 +321,8 @@ export const useFamilyMembers = (): UseFamilyMembersReturn => {
     setLoadingState(true)
     try {
       // Mark as inactive instead of hard delete for safety
-      const response = await familyMemberService.supabase
+      const { supabase } = await import('../lib/supabase')
+      const response = await supabase
         .from('family_member_restrictions')
         .update({ is_active: false })
         .eq('id', restrictionId)

@@ -15,7 +15,7 @@ import {
 } from '../types/database.types'
 
 export interface PhotoServiceError {
-  code: 'NETWORK_ERROR' | 'PERMISSION_DENIED' | 'INVALID_PARAMS' | 'UPLOAD_ERROR' | 'COMPRESSION_ERROR' | 'STORAGE_ERROR'
+  code: 'NETWORK_ERROR' | 'PERMISSION_DENIED' | 'INVALID_PARAMS' | 'UPLOAD_ERROR' | 'COMPRESSION_ERROR' | 'STORAGE_ERROR' | 'NOT_FOUND'
   message: string
   details?: any
 }

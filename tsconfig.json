@@ -3,7 +3,7 @@
   "compilerOptions": {
     "strict": true,
     "typeRoots": ["./node_modules/@types", "./types"],
-    "types": ["nativewind/types"]
+  "types": ["nativewind/types", "jest"]
   },
   "include": [
     "**/*.ts",

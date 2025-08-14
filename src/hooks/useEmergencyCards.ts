@@ -9,6 +9,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useUserRestrictions } from './useUserProfile'
 import { emergencyCardService } from '../services/database'
+import { supabase } from '../lib/supabase'
 import {
   EmergencyCard,
   EmergencyCardInsert,
@@ -112,6 +113,27 @@ export const useEmergencyCards = (familyMemberId?: string): UseEmergencyCardsRet
 
     setLoadingState(true)
     try {
+      // If creating for the current user, ensure the user_profiles row exists to satisfy FK
+      if (!forFamilyMember && user?.id) {
+        const { data: existingProfile } = await supabase
+          .from('user_profiles')
+          .select('id')
+          .eq('id', user.id)
+          .maybeSingle()
+
+        if (!existingProfile) {
+          // Create a minimal profile record
+          const { error: insertProfileError } = await supabase
+            .from('user_profiles')
+            .insert({ id: user.id, email: user.email || '' })
+
+          if (insertProfileError) {
+            handleError('Unable to create user profile required for emergency cards')
+            return false
+          }
+        }
+      }
+
       const emergencyCardData: EmergencyCardInsert = {
         ...cardData,
         user_id: forFamilyMember ? null : user!.id,

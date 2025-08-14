@@ -5,8 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from './src';
 import { RootNavigator } from './src/navigation/RootNavigator';
 
-// Import global CSS for NativeWind styling
-// import './global.css';
+// Styling is provided via NativeWind on native and Tailwind CSS via global.css (imported in index.web.ts) on web.
 
 /**
  * Main App Component with Navigation and Supabase Integration

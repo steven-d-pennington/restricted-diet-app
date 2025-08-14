@@ -43,7 +43,7 @@ export function SafetyButton({
   testID,
   accessibilityHint
 }: SafetyButtonProps) {
-  const { getButtonClass, getOutlineButtonClass } = useButtonClasses();
+  const { getButtonClass, getOutlineButtonClass, getButtonStyle, getButtonTextStyle } = useButtonClasses();
   const touchTargetClass = getTouchTargetClass();
   const normalizedSize: ComponentSize = ((): ComponentSize => {
     if (size === 'small') return 'sm';
@@ -70,10 +70,10 @@ export function SafetyButton({
   
   return (
     <TouchableOpacity
-  onPress={onPress}
+      onPress={onPress}
       disabled={isDisabled}
       className={`${finalClass} ${touchTargetClass}`}
-  style={style}
+      style={[getButtonStyle(variant, normalizedSize), style]}
       testID={testID}
       {...accessibilityProps}
       accessibilityState={{ 
@@ -101,6 +101,7 @@ export function SafetyButton({
         {/* Button text */}
         <Text 
           className="font-medium text-center"
+          style={getButtonTextStyle(variant)}
           numberOfLines={1}
         >
           {title}

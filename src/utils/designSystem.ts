@@ -4,6 +4,8 @@
  */
 
 import { useMemo } from 'react';
+import { Platform } from 'react-native';
+import type { TextStyle, ViewStyle } from 'react-native';
 
 // Type definitions
 export type SafetyStatus = 'safe' | 'danger' | 'caution' | 'unknown';
@@ -220,6 +222,48 @@ export function useButtonClasses() {
       
       return `${baseClass} ${sizeClass.padding} ${sizeClass.text} ${variantClass[variant]}`;
     },
+
+    // Web-only fallback inline styles for buttons when className/styles aren't processed
+    getButtonStyle: (variant: ComponentVariant, size: ComponentSize = 'md'): ViewStyle | undefined => {
+      if (Platform.OS !== 'web') return undefined;
+      const heightMap: Record<ComponentSize, number> = { xs: 24, sm: 32, md: 40, lg: 48, xl: 64 };
+      const paddingHMap: Record<ComponentSize, number> = { xs: 8, sm: 10, md: 12, lg: 16, xl: 20 };
+      const radius = 8;
+      const backgroundMap: Record<ComponentVariant, string> = {
+        primary: '#0ea5e9',
+        secondary: '#f3f4f6',
+        success: '#22c55e',
+        warning: '#f59e0b',
+        error: '#ef4444',
+      };
+      const borderColorMap: Record<ComponentVariant, string> = {
+        primary: '#0ea5e9',
+        secondary: '#d1d5db',
+        success: '#22c55e',
+        warning: '#f59e0b',
+        error: '#ef4444',
+      };
+      return {
+        backgroundColor: backgroundMap[variant],
+        borderColor: borderColorMap[variant],
+        borderWidth: variant === 'secondary' ? 1 : 0,
+        borderRadius: radius,
+        minHeight: heightMap[size],
+        paddingHorizontal: paddingHMap[size],
+        alignItems: 'center',
+        justifyContent: 'center',
+      } as ViewStyle;
+    },
+    getButtonTextStyle: (variant: ComponentVariant): TextStyle | undefined => {
+      if (Platform.OS !== 'web') return undefined;
+      const color = ((): string => {
+        switch (variant) {
+          case 'secondary': return '#111827';
+          default: return '#ffffff';
+        }
+      })();
+      return { color, fontWeight: '600' } as TextStyle;
+    },
   }), []);
 }
 
@@ -236,6 +280,24 @@ export function useInputClasses() {
       }
       
       return `${baseClass} border-neutral-300 focus:ring-primary-500 focus:border-primary-500`;
+    },
+    
+    // Web-only fallback style to ensure visible inputs even if className processing fails
+    getInputStyle: (hasError: boolean = false): (ViewStyle & TextStyle) | undefined => {
+      if (Platform.OS !== 'web') return undefined;
+      return {
+        borderWidth: 1,
+        borderColor: hasError ? '#fca5a5' /* red-300 */ : '#d1d5db' /* gray-300 */,
+        borderRadius: 8,
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+        backgroundColor: '#ffffff',
+        // Provide a subtle box shadow similar to Tailwind's shadow-sm
+        shadowColor: 'rgba(0,0,0,0.1)',
+        shadowOpacity: 1,
+        shadowRadius: 2,
+        shadowOffset: { width: 0, height: 1 },
+      } as ViewStyle & TextStyle;
     },
     
     getLabelClass: (hasError: boolean = false): string => {

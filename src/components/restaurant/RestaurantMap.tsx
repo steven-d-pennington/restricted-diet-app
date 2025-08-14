@@ -7,13 +7,6 @@
 
 import React, { useState, useCallback, useMemo, useRef } from 'react'
 import { View, Text, TouchableOpacity, Alert, Platform } from 'react-native'
-import MapView, { 
-  Marker, 
-  Callout, 
-  Region, 
-  PROVIDER_GOOGLE,
-  PROVIDER_DEFAULT 
-} from 'react-native-maps'
 import { SafetyBadge } from '../SafetyBadge'
 import { 
   RestaurantWithSafetyInfo, 
@@ -21,13 +14,45 @@ import {
   SafetyLevel 
 } from '../../types/database.types'
 
+// Platform-specific imports
+let MapView: any
+let Marker: any
+let Callout: any
+let Region: any
+let PROVIDER_GOOGLE: any
+let PROVIDER_DEFAULT: any
+
+if (Platform.OS !== 'web') {
+  try {
+    const MapComponents = require('react-native-maps')
+    MapView = MapComponents.default
+    Marker = MapComponents.Marker
+    Callout = MapComponents.Callout
+    Region = MapComponents.Region
+    PROVIDER_GOOGLE = MapComponents.PROVIDER_GOOGLE
+    PROVIDER_DEFAULT = MapComponents.PROVIDER_DEFAULT
+  } catch (error) {
+    console.warn('react-native-maps not available:', error)
+  }
+} else {
+  // Web fallback - import the web component
+  const { RestaurantMapWeb } = require('./RestaurantMapWeb')
+  
+  // Create a wrapper that matches the MapView interface
+  const WebMapWrapper = (props: any) => {
+    return React.createElement(RestaurantMapWeb, props)
+  }
+  
+  MapView = WebMapWrapper
+}
+
 interface RestaurantMapProps {
   restaurants: RestaurantWithSafetyInfo[]
   currentLocation?: LocationCoordinates | null
-  initialRegion?: Region
+  initialRegion?: any // Make region type flexible for web compatibility
   onRestaurantPress: (restaurant: RestaurantWithSafetyInfo) => void
   onMapPress?: (coordinate: LocationCoordinates) => void
-  onRegionChange?: (region: Region) => void
+  onRegionChange?: (region: any) => void
   showCurrentLocation?: boolean
   showClusterIcons?: boolean
   style?: any
@@ -52,7 +77,20 @@ export const RestaurantMap: React.FC<RestaurantMapProps> = ({
   style,
   loading = false
 }) => {
-  const [region, setRegion] = useState<Region>(initialRegion || {
+  // Web fallback - if MapView is not available or we're on web, use web component
+  if (Platform.OS === 'web' || !MapView) {
+    return (
+      <MapView
+        restaurants={restaurants}
+        currentLocation={currentLocation}
+        onRestaurantPress={onRestaurantPress}
+        showCurrentLocation={showCurrentLocation}
+        style={style}
+        loading={loading}
+      />
+    )
+  }
+  const [region, setRegion] = useState(initialRegion || {
     latitude: currentLocation?.latitude || 37.7749,
     longitude: currentLocation?.longitude || -122.4194,
     latitudeDelta: 0.05,
@@ -165,7 +203,7 @@ export const RestaurantMap: React.FC<RestaurantMapProps> = ({
     }
   }, [onRestaurantPress])
 
-  const handleRegionChangeComplete = useCallback((newRegion: Region) => {
+  const handleRegionChangeComplete = useCallback((newRegion: any) => {
     setRegion(newRegion)
     onRegionChange?.(newRegion)
   }, [onRegionChange])

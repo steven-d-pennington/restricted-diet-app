@@ -6,7 +6,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import AsyncStorage from '@react-native-async-storage/async-storage'
+import { Storage } from '../utils/storage'
 import LocationService, { LocationServiceError, GeocodeResult, LocationPermissionStatus } from '../services/locationService'
 import { LocationCoordinates } from '../types/database.types'
 
@@ -65,7 +65,7 @@ export const useLocation = (
 
   const loadCachedLocation = useCallback(async () => {
     try {
-      const cached = await AsyncStorage.getItem(LOCATION_CACHE_KEY)
+      const cached = await Storage.getItem(LOCATION_CACHE_KEY)
       if (cached) {
         const { location, timestamp } = JSON.parse(cached)
         const age = Date.now() - timestamp
@@ -75,7 +75,7 @@ export const useLocation = (
           return location
         } else {
           // Remove expired cache
-          await AsyncStorage.removeItem(LOCATION_CACHE_KEY)
+          await Storage.removeItem(LOCATION_CACHE_KEY)
         }
       }
     } catch (error) {
@@ -90,7 +90,7 @@ export const useLocation = (
         location,
         timestamp: Date.now()
       }
-      await AsyncStorage.setItem(LOCATION_CACHE_KEY, JSON.stringify(cacheData))
+      await Storage.setItem(LOCATION_CACHE_KEY, JSON.stringify(cacheData))
     } catch (error) {
       console.error('Error caching location:', error)
     }

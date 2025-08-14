@@ -4,9 +4,27 @@
  * SAFETY CRITICAL: Ensures reliable camera access for product scanning
  */
 
-import { Camera, CameraType, FlashMode } from 'expo-camera'
-import { BarCodeScanner } from 'expo-barcode-scanner'
 import { Platform, Alert, Linking } from 'react-native'
+
+// Platform-specific imports
+let Camera: any
+let CameraType: any
+let FlashMode: any
+let BarCodeScanner: any
+
+if (Platform.OS !== 'web') {
+  try {
+    const CameraComponents = require('expo-camera')
+    Camera = CameraComponents.Camera
+    CameraType = CameraComponents.CameraType
+    FlashMode = CameraComponents.FlashMode
+    
+    const ScannerComponents = require('expo-barcode-scanner')
+    BarCodeScanner = ScannerComponents.BarCodeScanner
+  } catch (error) {
+    console.warn('Camera/Scanner modules not available:', error)
+  }
+}
 
 export interface CameraPermissionStatus {
   granted: boolean
@@ -40,6 +58,17 @@ class CameraService {
    * Request camera permissions with comprehensive error handling
    */
   async requestPermissions(): Promise<CameraPermissionStatus> {
+    if (Platform.OS === 'web' || !Camera) {
+      // Web fallback - check for getUserMedia support
+      const hasCamera = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)
+      this.permissionStatus = {
+        granted: hasCamera,
+        canAskAgain: false,
+        status: hasCamera ? 'granted' : 'denied'
+      }
+      return this.permissionStatus
+    }
+
     try {
       const { status, canAskAgain } = await Camera.requestCameraPermissionsAsync()
       
@@ -60,6 +89,17 @@ class CameraService {
    * Check current camera permission status
    */
   async checkPermissions(): Promise<CameraPermissionStatus> {
+    if (Platform.OS === 'web' || !Camera) {
+      // Web fallback - check for getUserMedia support
+      const hasCamera = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)
+      this.permissionStatus = {
+        granted: hasCamera,
+        canAskAgain: false,
+        status: hasCamera ? 'granted' : 'denied'
+      }
+      return this.permissionStatus
+    }
+
     try {
       const { status, canAskAgain } = await Camera.getCameraPermissionsAsync()
       
@@ -81,6 +121,21 @@ class CameraService {
    */
   async getCameraCapabilities(): Promise<CameraCapabilities> {
     if (this.capabilities) {
+      return this.capabilities
+    }
+
+    if (Platform.OS === 'web' || !Camera) {
+      // Web fallback - basic camera detection
+      const hasCamera = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)
+      
+      this.capabilities = {
+        hasCamera,
+        hasFrontCamera: hasCamera,
+        hasBackCamera: hasCamera,
+        hasFlash: false, // Flash not typically available on web
+        supportedBarcodeTypes: [] // No barcode scanning on web fallback
+      }
+      
       return this.capabilities
     }
 
@@ -127,19 +182,28 @@ class CameraService {
    * Get supported barcode types for the device
    */
   getSupportedBarcodeTypes(): string[] {
-    return [
-      BarCodeScanner.Constants.BarCodeType.upc_a,
-      BarCodeScanner.Constants.BarCodeType.upc_e,
-      BarCodeScanner.Constants.BarCodeType.ean13,
-      BarCodeScanner.Constants.BarCodeType.ean8,
-      BarCodeScanner.Constants.BarCodeType.code128,
-      BarCodeScanner.Constants.BarCodeType.code39,
-      BarCodeScanner.Constants.BarCodeType.code93,
-      BarCodeScanner.Constants.BarCodeType.codabar,
-      BarCodeScanner.Constants.BarCodeType.datamatrix,
-      BarCodeScanner.Constants.BarCodeType.pdf417,
-      BarCodeScanner.Constants.BarCodeType.qr,
-    ]
+    if (Platform.OS === 'web' || !BarCodeScanner) {
+      return [] // No barcode scanning on web
+    }
+    
+    try {
+      return [
+        BarCodeScanner.Constants.BarCodeType.upc_a,
+        BarCodeScanner.Constants.BarCodeType.upc_e,
+        BarCodeScanner.Constants.BarCodeType.ean13,
+        BarCodeScanner.Constants.BarCodeType.ean8,
+        BarCodeScanner.Constants.BarCodeType.code128,
+        BarCodeScanner.Constants.BarCodeType.code39,
+        BarCodeScanner.Constants.BarCodeType.code93,
+        BarCodeScanner.Constants.BarCodeType.codabar,
+        BarCodeScanner.Constants.BarCodeType.datamatrix,
+        BarCodeScanner.Constants.BarCodeType.pdf417,
+        BarCodeScanner.Constants.BarCodeType.qr,
+      ]
+    } catch (error) {
+      console.warn('BarCodeScanner constants not available:', error)
+      return []
+    }
   }
 
   /**
@@ -204,40 +268,52 @@ class CameraService {
       return { isValid: false, error: 'Empty barcode data' }
     }
 
-    // Check length constraints based on barcode type
-    switch (type) {
-      case BarCodeScanner.Constants.BarCodeType.upc_a:
-        if (cleanData.length !== 12) {
-          return { isValid: false, error: 'Invalid UPC-A barcode length' }
-        }
-        break
-      case BarCodeScanner.Constants.BarCodeType.upc_e:
-        if (cleanData.length !== 8) {
-          return { isValid: false, error: 'Invalid UPC-E barcode length' }
-        }
-        break
-      case BarCodeScanner.Constants.BarCodeType.ean13:
-        if (cleanData.length !== 13) {
-          return { isValid: false, error: 'Invalid EAN-13 barcode length' }
-        }
-        break
-      case BarCodeScanner.Constants.BarCodeType.ean8:
-        if (cleanData.length !== 8) {
-          return { isValid: false, error: 'Invalid EAN-8 barcode length' }
-        }
-        break
+    if (Platform.OS === 'web' || !BarCodeScanner) {
+      // Web fallback - basic validation
+      if (cleanData.length < 4 || cleanData.length > 20) {
+        return { isValid: false, error: 'Invalid barcode length' }
+      }
+      return { isValid: true }
     }
 
-    // Check if it's numeric for UPC/EAN codes
-    const isUPCOrEAN = [
-      BarCodeScanner.Constants.BarCodeType.upc_a,
-      BarCodeScanner.Constants.BarCodeType.upc_e,
-      BarCodeScanner.Constants.BarCodeType.ean13,
-      BarCodeScanner.Constants.BarCodeType.ean8,
-    ].includes(type)
+    try {
+      // Check length constraints based on barcode type
+      switch (type) {
+        case BarCodeScanner.Constants.BarCodeType.upc_a:
+          if (cleanData.length !== 12) {
+            return { isValid: false, error: 'Invalid UPC-A barcode length' }
+          }
+          break
+        case BarCodeScanner.Constants.BarCodeType.upc_e:
+          if (cleanData.length !== 8) {
+            return { isValid: false, error: 'Invalid UPC-E barcode length' }
+          }
+          break
+        case BarCodeScanner.Constants.BarCodeType.ean13:
+          if (cleanData.length !== 13) {
+            return { isValid: false, error: 'Invalid EAN-13 barcode length' }
+          }
+          break
+        case BarCodeScanner.Constants.BarCodeType.ean8:
+          if (cleanData.length !== 8) {
+            return { isValid: false, error: 'Invalid EAN-8 barcode length' }
+          }
+          break
+      }
 
-    if (isUPCOrEAN && !/^\d+$/.test(cleanData)) {
-      return { isValid: false, error: 'Invalid barcode format - must be numeric' }
+      // Check if it's numeric for UPC/EAN codes
+      const isUPCOrEAN = [
+        BarCodeScanner.Constants.BarCodeType.upc_a,
+        BarCodeScanner.Constants.BarCodeType.upc_e,
+        BarCodeScanner.Constants.BarCodeType.ean13,
+        BarCodeScanner.Constants.BarCodeType.ean8,
+      ].includes(type)
+
+      if (isUPCOrEAN && !/^\d+$/.test(cleanData)) {
+        return { isValid: false, error: 'Invalid barcode format - must be numeric' }
+      }
+    } catch (error) {
+      console.warn('Barcode validation error:', error)
     }
 
     // General length check
@@ -254,19 +330,27 @@ class CameraService {
   formatBarcode(data: string, type: string): string {
     const cleanData = data.replace(/\s/g, '')
     
-    switch (type) {
-      case BarCodeScanner.Constants.BarCodeType.upc_a:
-        // Format as X-XXXXX-XXXXX-X
-        if (cleanData.length === 12) {
-          return `${cleanData[0]}-${cleanData.slice(1, 6)}-${cleanData.slice(6, 11)}-${cleanData[11]}`
-        }
-        break
-      case BarCodeScanner.Constants.BarCodeType.ean13:
-        // Format as X-XXXXXX-XXXXXX-X
-        if (cleanData.length === 13) {
-          return `${cleanData[0]}-${cleanData.slice(1, 7)}-${cleanData.slice(7, 12)}-${cleanData[12]}`
-        }
-        break
+    if (Platform.OS === 'web' || !BarCodeScanner) {
+      return cleanData // Simple formatting on web
+    }
+    
+    try {
+      switch (type) {
+        case BarCodeScanner.Constants.BarCodeType.upc_a:
+          // Format as X-XXXXX-XXXXX-X
+          if (cleanData.length === 12) {
+            return `${cleanData[0]}-${cleanData.slice(1, 6)}-${cleanData.slice(6, 11)}-${cleanData[11]}`
+          }
+          break
+        case BarCodeScanner.Constants.BarCodeType.ean13:
+          // Format as X-XXXXXX-XXXXXX-X
+          if (cleanData.length === 13) {
+            return `${cleanData[0]}-${cleanData.slice(1, 7)}-${cleanData.slice(7, 12)}-${cleanData[12]}`
+          }
+          break
+      }
+    } catch (error) {
+      console.warn('Barcode formatting error:', error)
     }
     
     return cleanData
@@ -276,21 +360,30 @@ class CameraService {
    * Get user-friendly barcode type name
    */
   getBarcodeTypeName(type: string): string {
-    const typeNames: Record<string, string> = {
-      [BarCodeScanner.Constants.BarCodeType.upc_a]: 'UPC-A',
-      [BarCodeScanner.Constants.BarCodeType.upc_e]: 'UPC-E',
-      [BarCodeScanner.Constants.BarCodeType.ean13]: 'EAN-13',
-      [BarCodeScanner.Constants.BarCodeType.ean8]: 'EAN-8',
-      [BarCodeScanner.Constants.BarCodeType.code128]: 'Code 128',
-      [BarCodeScanner.Constants.BarCodeType.code39]: 'Code 39',
-      [BarCodeScanner.Constants.BarCodeType.code93]: 'Code 93',
-      [BarCodeScanner.Constants.BarCodeType.codabar]: 'Codabar',
-      [BarCodeScanner.Constants.BarCodeType.datamatrix]: 'Data Matrix',
-      [BarCodeScanner.Constants.BarCodeType.pdf417]: 'PDF417',
-      [BarCodeScanner.Constants.BarCodeType.qr]: 'QR Code',
+    if (Platform.OS === 'web' || !BarCodeScanner) {
+      return 'Barcode' // Generic name on web
     }
+    
+    try {
+      const typeNames: Record<string, string> = {
+        [BarCodeScanner.Constants.BarCodeType.upc_a]: 'UPC-A',
+        [BarCodeScanner.Constants.BarCodeType.upc_e]: 'UPC-E',
+        [BarCodeScanner.Constants.BarCodeType.ean13]: 'EAN-13',
+        [BarCodeScanner.Constants.BarCodeType.ean8]: 'EAN-8',
+        [BarCodeScanner.Constants.BarCodeType.code128]: 'Code 128',
+        [BarCodeScanner.Constants.BarCodeType.code39]: 'Code 39',
+        [BarCodeScanner.Constants.BarCodeType.code93]: 'Code 93',
+        [BarCodeScanner.Constants.BarCodeType.codabar]: 'Codabar',
+        [BarCodeScanner.Constants.BarCodeType.datamatrix]: 'Data Matrix',
+        [BarCodeScanner.Constants.BarCodeType.pdf417]: 'PDF417',
+        [BarCodeScanner.Constants.BarCodeType.qr]: 'QR Code',
+      }
 
-    return typeNames[type] || 'Unknown'
+      return typeNames[type] || 'Unknown'
+    } catch (error) {
+      console.warn('Barcode type name error:', error)
+      return 'Unknown'
+    }
   }
 
   /**

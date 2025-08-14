@@ -6,7 +6,7 @@
  */
 
 import { useState, useCallback, useEffect } from 'react'
-import AsyncStorage from '@react-native-async-storage/async-storage'
+import { Storage } from '../utils/storage'
 import { Product, ProductSafetyAssessment, SafetyLevel } from '../types/database.types'
 import { useAuth } from '../contexts/AuthContext'
 import offlineService from '../services/offlineService'
@@ -94,8 +94,8 @@ export const useScanHistory = (options: Partial<ScanHistoryOptions> = {}): UseSc
 
     try {
       const [historyData, favoritesData] = await Promise.all([
-        AsyncStorage.getItem(HISTORY_KEY),
-        AsyncStorage.getItem(FAVORITES_KEY),
+        Storage.getItem(HISTORY_KEY),
+        Storage.getItem(FAVORITES_KEY),
       ])
 
       const parsedHistory = historyData ? JSON.parse(historyData) : []
@@ -113,7 +113,7 @@ export const useScanHistory = (options: Partial<ScanHistoryOptions> = {}): UseSc
 
   const saveHistory = useCallback(async (newHistory: ScanHistoryItem[]) => {
     try {
-      await AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(newHistory))
+      await Storage.setItem(HISTORY_KEY, JSON.stringify(newHistory))
       
       // Auto-save to offline cache if enabled
       if (opts.autoSaveOffline) {
@@ -129,7 +129,7 @@ export const useScanHistory = (options: Partial<ScanHistoryOptions> = {}): UseSc
 
   const saveFavorites = useCallback(async (newFavorites: ScanHistoryItem[]) => {
     try {
-      await AsyncStorage.setItem(FAVORITES_KEY, JSON.stringify(newFavorites))
+      await Storage.setItem(FAVORITES_KEY, JSON.stringify(newFavorites))
       
       // Cache all favorites for offline access
       if (opts.autoSaveOffline) {
@@ -196,7 +196,7 @@ export const useScanHistory = (options: Partial<ScanHistoryOptions> = {}): UseSc
   const clearHistory = useCallback(async () => {
     try {
       setHistory([])
-      await AsyncStorage.removeItem(HISTORY_KEY)
+      await Storage.removeItem(HISTORY_KEY)
     } catch (error) {
       console.error('Failed to clear history:', error)
       setErrorState('Failed to clear history')

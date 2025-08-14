@@ -11,7 +11,8 @@ import {
   Image, 
   Alert, 
   Modal,
-  Dimensions 
+  Dimensions,
+  Platform 
 } from 'react-native'
 import { SafetyButton } from '../SafetyButton'
 import { getAccessibilityProps } from '../../utils/designSystem'
@@ -45,23 +46,45 @@ export const EmergencyPhotoCapture: React.FC<EmergencyPhotoCaptureProps> = ({
     setShowModal(false)
     
     try {
-      // In a real implementation, this would use expo-camera or react-native-image-picker
-      // For now, we'll simulate photo capture
-      Alert.alert(
-        'Photo Capture',
-        'Camera functionality would be implemented here using expo-camera or react-native-image-picker',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Simulate Photo',
-            onPress: () => {
-              // Simulate a photo being taken
-              const simulatedPhotoUri = `https://picsum.photos/300/300?random=${Date.now()}`
-              onPhotoSelected(simulatedPhotoUri)
+      if (Platform.OS === 'web') {
+        // Web fallback - use HTML5 file input with camera capture
+        const input = document.createElement('input')
+        input.type = 'file'
+        input.accept = 'image/*'
+        input.capture = 'environment' // Use back camera if available
+        
+        input.onchange = (event: any) => {
+          const file = event.target.files[0]
+          if (file) {
+            const reader = new FileReader()
+            reader.onload = (e) => {
+              if (e.target?.result) {
+                onPhotoSelected(e.target.result as string)
+              }
             }
+            reader.readAsDataURL(file)
           }
-        ]
-      )
+        }
+        
+        input.click()
+      } else {
+        // Mobile implementation would use expo-camera or react-native-image-picker
+        Alert.alert(
+          'Photo Capture',
+          'Camera functionality would be implemented here using expo-camera or react-native-image-picker',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Simulate Photo',
+              onPress: () => {
+                // Simulate a photo being taken
+                const simulatedPhotoUri = `https://picsum.photos/300/300?random=${Date.now()}`
+                onPhotoSelected(simulatedPhotoUri)
+              }
+            }
+          ]
+        )
+      }
     } catch (error) {
       console.error('Error taking photo:', error)
       Alert.alert('Error', 'Failed to take photo. Please try again.')
@@ -72,22 +95,44 @@ export const EmergencyPhotoCapture: React.FC<EmergencyPhotoCaptureProps> = ({
     setShowModal(false)
     
     try {
-      // In a real implementation, this would use expo-image-picker
-      Alert.alert(
-        'Select Photo',
-        'Photo gallery functionality would be implemented here using expo-image-picker',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Simulate Selection',
-            onPress: () => {
-              // Simulate a photo being selected
-              const simulatedPhotoUri = `https://picsum.photos/300/300?random=${Date.now()}`
-              onPhotoSelected(simulatedPhotoUri)
+      if (Platform.OS === 'web') {
+        // Web fallback - use HTML5 file input
+        const input = document.createElement('input')
+        input.type = 'file'
+        input.accept = 'image/*'
+        
+        input.onchange = (event: any) => {
+          const file = event.target.files[0]
+          if (file) {
+            const reader = new FileReader()
+            reader.onload = (e) => {
+              if (e.target?.result) {
+                onPhotoSelected(e.target.result as string)
+              }
             }
+            reader.readAsDataURL(file)
           }
-        ]
-      )
+        }
+        
+        input.click()
+      } else {
+        // Mobile implementation would use expo-image-picker
+        Alert.alert(
+          'Select Photo',
+          'Photo gallery functionality would be implemented here using expo-image-picker',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Simulate Selection',
+              onPress: () => {
+                // Simulate a photo being selected
+                const simulatedPhotoUri = `https://picsum.photos/300/300?random=${Date.now()}`
+                onPhotoSelected(simulatedPhotoUri)
+              }
+            }
+          ]
+        )
+      }
     } catch (error) {
       console.error('Error selecting photo:', error)
       Alert.alert('Error', 'Failed to select photo. Please try again.')
@@ -187,6 +232,7 @@ export const EmergencyPhotoCapture: React.FC<EmergencyPhotoCaptureProps> = ({
             
             <Text className="text-gray-600 text-sm mb-6 text-center leading-relaxed">
               Adding a photo helps first responders quickly identify you in emergency situations.
+              {Platform.OS === 'web' && '\n\nOn web browsers, you can upload a photo from your device.'}
             </Text>
 
             <View className="space-y-3">

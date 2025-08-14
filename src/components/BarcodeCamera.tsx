@@ -15,8 +15,28 @@ import {
   Platform,
   TouchableOpacity,
 } from 'react-native'
-import { Camera, CameraType, FlashMode } from 'expo-camera'
-import { BarCodeScanner, BarCodeScannerResult } from 'expo-barcode-scanner'
+
+// Platform-specific imports
+let Camera: any
+let CameraType: any
+let FlashMode: any
+let BarCodeScanner: any
+let BarCodeScannerResult: any
+
+if (Platform.OS !== 'web') {
+  try {
+    const CameraComponents = require('expo-camera')
+    Camera = CameraComponents.Camera
+    CameraType = CameraComponents.CameraType
+    FlashMode = CameraComponents.FlashMode
+    
+    const ScannerComponents = require('expo-barcode-scanner')
+    BarCodeScanner = ScannerComponents.BarCodeScanner
+    BarCodeScannerResult = ScannerComponents.BarCodeScannerResult
+  } catch (error) {
+    console.warn('Camera/Scanner modules not available:', error)
+  }
+}
 
 interface BarcodeCameraProps {
   onBarcodeScanned: (barcode: string, type: string) => void
@@ -25,22 +45,70 @@ interface BarcodeCameraProps {
   children?: React.ReactNode
 }
 
+// Web fallback component
+const WebCameraFallback: React.FC<BarcodeCameraProps> = ({
+  onError,
+  children
+}) => {
+  useEffect(() => {
+    onError('Camera scanning is not available on web platform. Please use the manual entry option.')
+  }, [onError])
+
+  return (
+    <View style={[styles.container, styles.webFallbackContainer]}>
+      <View style={styles.webFallbackContent}>
+        <Text style={styles.webFallbackTitle}>Camera Not Available</Text>
+        <Text style={styles.webFallbackText}>
+          Camera scanning is not supported on web browsers.{"\n"}
+          Please use manual barcode entry instead.
+        </Text>
+        <TouchableOpacity 
+          style={styles.webFallbackButton}
+          onPress={() => {
+            Alert.alert('Manual Entry', 'Use the manual entry option in the main menu')
+          }}
+        >
+          <Text style={styles.webFallbackButtonText}>Manual Entry</Text>
+        </TouchableOpacity>
+      </View>
+      {children}
+    </View>
+  )
+}
+
 export const BarcodeCamera: React.FC<BarcodeCameraProps> = ({
   onBarcodeScanned,
   onError,
   isActive,
   children,
 }) => {
+  // Web fallback
+  if (Platform.OS === 'web' || !Camera || !BarCodeScanner) {
+    return (
+      <WebCameraFallback
+        onBarcodeScanned={onBarcodeScanned}
+        onError={onError}
+        isActive={isActive}
+      >
+        {children}
+      </WebCameraFallback>
+    )
+  }
   const [hasPermission, setHasPermission] = useState<boolean | null>(null)
   const [scanned, setScanned] = useState(false)
-  const [flashMode, setFlashMode] = useState<FlashMode>(FlashMode.off)
+  const [flashMode, setFlashMode] = useState(FlashMode?.off || 'off')
   const [cameraReady, setCameraReady] = useState(false)
-  const cameraRef = useRef<Camera>(null)
+  const cameraRef = useRef<any>(null)
 
   // Request camera permissions on mount
   useEffect(() => {
     const requestPermissions = async () => {
       try {
+        if (!Camera) {
+          onError('Camera not available on this platform')
+          return
+        }
+        
         const { status } = await Camera.requestCameraPermissionsAsync()
         setHasPermission(status === 'granted')
         
@@ -62,7 +130,7 @@ export const BarcodeCamera: React.FC<BarcodeCameraProps> = ({
     }
   }, [isActive])
 
-  const handleBarCodeScanned = ({ type, data }: BarCodeScannerResult) => {
+  const handleBarCodeScanned = ({ type, data }: any) => {
     if (scanned || !isActive) return
 
     setScanned(true)
@@ -86,6 +154,8 @@ export const BarcodeCamera: React.FC<BarcodeCameraProps> = ({
   }
 
   const toggleFlash = () => {
+    if (!FlashMode) return
+    
     setFlashMode(prev => 
       prev === FlashMode.off ? FlashMode.torch : FlashMode.off
     )
@@ -135,11 +205,11 @@ export const BarcodeCamera: React.FC<BarcodeCameraProps> = ({
       <Camera
         ref={cameraRef}
         style={styles.camera}
-        type={CameraType.back}
+        type={CameraType?.back || 'back'}
         flashMode={flashMode}
         onCameraReady={handleCameraReady}
         onBarCodeScanned={isActive ? handleBarCodeScanned : undefined}
-        barCodeScannerSettings={{
+        barCodeScannerSettings={BarCodeScanner ? {
           barCodeTypes: [
             BarCodeScanner.Constants.BarCodeType.upc_a,
             BarCodeScanner.Constants.BarCodeType.upc_e,
@@ -153,7 +223,7 @@ export const BarcodeCamera: React.FC<BarcodeCameraProps> = ({
             BarCodeScanner.Constants.BarCodeType.pdf417,
             BarCodeScanner.Constants.BarCodeType.qr,
           ],
-        }}
+        } : undefined}
       >
         {/* Camera overlay with scan area */}
         <View style={styles.overlay}>
@@ -195,10 +265,10 @@ export const BarcodeCamera: React.FC<BarcodeCameraProps> = ({
           <TouchableOpacity
             style={styles.flashButton}
             onPress={toggleFlash}
-            accessibilityLabel={`Turn flash ${flashMode === FlashMode.off ? 'on' : 'off'}`}
+            accessibilityLabel={`Turn flash ${flashMode === (FlashMode?.off || 'off') ? 'on' : 'off'}`}
           >
             <Text style={styles.flashButtonText}>
-              {flashMode === FlashMode.off ? '🔦' : '💡'}
+              {flashMode === (FlashMode?.off || 'off') ? '🔦' : '💡'}
             </Text>
           </TouchableOpacity>
 
@@ -362,6 +432,44 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   rescanButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  // Web fallback styles
+  webFallbackContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#1A1A1A',
+  },
+  webFallbackContent: {
+    backgroundColor: '#2A2A2A',
+    padding: 32,
+    borderRadius: 12,
+    maxWidth: 400,
+    alignItems: 'center',
+  },
+  webFallbackTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  webFallbackText: {
+    fontSize: 16,
+    color: '#CCCCCC',
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 24,
+  },
+  webFallbackButton: {
+    backgroundColor: '#E53E3E',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+  },
+  webFallbackButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',

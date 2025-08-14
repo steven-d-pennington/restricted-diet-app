@@ -5,7 +5,7 @@
  * even when network connectivity is unavailable
  */
 
-import AsyncStorage from '@react-native-async-storage/async-storage'
+import { Storage } from '../utils/storage'
 import { Product, ProductSafetyAssessment, SafetyLevel } from '../types/database.types'
 
 export interface OfflineProduct extends Product {
@@ -306,7 +306,7 @@ class OfflineService {
    */
   private async loadCache(): Promise<void> {
     try {
-      const cacheData = await AsyncStorage.getItem(this.CACHE_KEY)
+      const cacheData = await Storage.getItem(this.CACHE_KEY)
       
       if (cacheData) {
         this.cache = JSON.parse(cacheData)
@@ -332,7 +332,7 @@ class OfflineService {
       if (!this.cache) return
 
       const cacheData = JSON.stringify(this.cache)
-      await AsyncStorage.setItem(this.CACHE_KEY, cacheData)
+      await Storage.setItem(this.CACHE_KEY, cacheData)
     } catch (error) {
       console.error('Failed to save cache:', error)
     }
@@ -443,7 +443,7 @@ class OfflineService {
    */
   async clearCache(): Promise<void> {
     try {
-      await AsyncStorage.removeItem(this.CACHE_KEY)
+      await Storage.removeItem(this.CACHE_KEY)
       this.cache = null
       console.log('Offline cache cleared')
     } catch (error) {

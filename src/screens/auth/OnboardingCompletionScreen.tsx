@@ -387,7 +387,7 @@ export const OnboardingCompletionScreen: React.FC = () => {
                 )}
               </View>
               <Text className="text-xs text-neutral-600">{item.description}</Text>
-            </div>
+            </View>
           </View>
         ))}
       </View>

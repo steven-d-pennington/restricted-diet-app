@@ -6,7 +6,7 @@
  * which is crucial during emergencies when network connectivity may be unreliable.
  */
 
-import AsyncStorage from '@react-native-async-storage/async-storage'
+import { Storage } from '../utils/storage'
 import { EmergencyCard } from '../types/database.types'
 
 const OFFLINE_EMERGENCY_CARDS_KEY = 'offline_emergency_cards'
@@ -32,7 +32,7 @@ export class OfflineEmergencyService {
         version: 1
       }
       
-      await AsyncStorage.setItem(
+      await Storage.setItem(
         OFFLINE_EMERGENCY_CARDS_KEY, 
         JSON.stringify(cardsWithTimestamp)
       )
@@ -53,7 +53,7 @@ export class OfflineEmergencyService {
     isStale: boolean
   }> {
     try {
-      const storedData = await AsyncStorage.getItem(OFFLINE_EMERGENCY_CARDS_KEY)
+      const storedData = await Storage.getItem(OFFLINE_EMERGENCY_CARDS_KEY)
       
       if (!storedData) {
         return { cards: [], lastUpdated: null, isStale: true }
@@ -115,14 +115,14 @@ export class OfflineEmergencyService {
    */
   static async addToSyncQueue(item: OfflineSyncItem): Promise<void> {
     try {
-      const queueData = await AsyncStorage.getItem(SYNC_QUEUE_KEY)
+      const queueData = await Storage.getItem(SYNC_QUEUE_KEY)
       const queue: OfflineSyncItem[] = queueData ? JSON.parse(queueData) : []
       
       // Remove any existing sync items for the same card
       const filteredQueue = queue.filter(queueItem => queueItem.id !== item.id)
       filteredQueue.push(item)
       
-      await AsyncStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(filteredQueue))
+      await Storage.setItem(SYNC_QUEUE_KEY, JSON.stringify(filteredQueue))
     } catch (error) {
       console.error('Failed to add item to sync queue:', error)
     }
@@ -133,7 +133,7 @@ export class OfflineEmergencyService {
    */
   static async getSyncQueue(): Promise<OfflineSyncItem[]> {
     try {
-      const queueData = await AsyncStorage.getItem(SYNC_QUEUE_KEY)
+      const queueData = await Storage.getItem(SYNC_QUEUE_KEY)
       return queueData ? JSON.parse(queueData) : []
     } catch (error) {
       console.error('Failed to get sync queue:', error)
@@ -146,7 +146,7 @@ export class OfflineEmergencyService {
    */
   static async clearSyncQueue(): Promise<void> {
     try {
-      await AsyncStorage.removeItem(SYNC_QUEUE_KEY)
+      await Storage.removeItem(SYNC_QUEUE_KEY)
     } catch (error) {
       console.error('Failed to clear sync queue:', error)
     }
@@ -290,9 +290,9 @@ export class OfflineEmergencyService {
   static async clearAllOfflineData(): Promise<void> {
     try {
       await Promise.all([
-        AsyncStorage.removeItem(OFFLINE_EMERGENCY_CARDS_KEY),
-        AsyncStorage.removeItem(SYNC_QUEUE_KEY),
-        AsyncStorage.removeItem(LAST_SYNC_KEY),
+        Storage.removeItem(OFFLINE_EMERGENCY_CARDS_KEY),
+        Storage.removeItem(SYNC_QUEUE_KEY),
+        Storage.removeItem(LAST_SYNC_KEY),
       ])
       console.log('Cleared all offline emergency data')
     } catch (error) {
@@ -319,8 +319,8 @@ export class OfflineEmergencyService {
       )
 
       // Estimate storage size
-      const cardsData = await AsyncStorage.getItem(OFFLINE_EMERGENCY_CARDS_KEY)
-      const queueData = await AsyncStorage.getItem(SYNC_QUEUE_KEY)
+      const cardsData = await Storage.getItem(OFFLINE_EMERGENCY_CARDS_KEY)
+      const queueData = await Storage.getItem(SYNC_QUEUE_KEY)
       const storageSize = (cardsData?.length || 0) + (queueData?.length || 0)
 
       return {
@@ -362,7 +362,7 @@ export class OfflineEmergencyService {
    */
   static async updateLastSync(): Promise<void> {
     try {
-      await AsyncStorage.setItem(LAST_SYNC_KEY, new Date().toISOString())
+      await Storage.setItem(LAST_SYNC_KEY, new Date().toISOString())
     } catch (error) {
       console.error('Failed to update last sync:', error)
     }

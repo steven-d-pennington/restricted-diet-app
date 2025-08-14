@@ -6,7 +6,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import AsyncStorage from '@react-native-async-storage/async-storage'
+import { Storage } from '../utils/storage'
 import RestaurantService from '../services/restaurantService'
 import LocationService from '../services/locationService'
 import { useUserProfile } from './useUserProfile'
@@ -94,7 +94,7 @@ export const useRestaurantSearch = (
       setCurrentParams(searchParams)
 
       // Cache recent search
-      await AsyncStorage.setItem(
+      await Storage.setItem(
         'recent_restaurant_search',
         JSON.stringify({
           params: searchParams,

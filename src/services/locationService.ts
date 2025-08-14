@@ -5,8 +5,19 @@
  * Handles GPS permissions, geocoding, and location-based calculations
  */
 
-import * as Location from 'expo-location'
+import { Platform } from 'react-native'
 import { LocationCoordinates } from '../types/database.types'
+
+// Platform-specific imports
+let Location: any
+
+if (Platform.OS !== 'web') {
+  try {
+    Location = require('expo-location')
+  } catch (error) {
+    console.warn('expo-location not available:', error)
+  }
+}
 
 export interface LocationServiceError {
   code: 'PERMISSION_DENIED' | 'LOCATION_UNAVAILABLE' | 'TIMEOUT' | 'GEOCODING_FAILED'
@@ -30,13 +41,13 @@ export interface GeocodeResult {
 export interface LocationPermissionStatus {
   granted: boolean
   canAskAgain: boolean
-  status: Location.LocationPermissionResponse['status']
+  status: string
 }
 
 class LocationService {
   private static instance: LocationService
   private currentLocation: LocationCoordinates | null = null
-  private watchId: Location.LocationSubscription | null = null
+  private watchId: any | null = null
   private geocodeCache: Map<string, GeocodeResult> = new Map()
 
   static getInstance(): LocationService {
@@ -50,6 +61,25 @@ class LocationService {
    * Request location permissions from the user
    */
   async requestLocationPermissions(): Promise<LocationPermissionStatus> {
+    if (Platform.OS === 'web' || !Location) {
+      // Web fallback - use browser geolocation API
+      return new Promise((resolve) => {
+        if ('geolocation' in navigator) {
+          resolve({
+            granted: true,
+            canAskAgain: false,
+            status: 'granted'
+          })
+        } else {
+          resolve({
+            granted: false,
+            canAskAgain: false,
+            status: 'denied'
+          })
+        }
+      })
+    }
+
     try {
       const { status, canAskAgain } = await Location.requestForegroundPermissionsAsync()
       
@@ -72,6 +102,15 @@ class LocationService {
    * Check current location permission status
    */
   async getLocationPermissionStatus(): Promise<LocationPermissionStatus> {
+    if (Platform.OS === 'web' || !Location) {
+      // Web fallback - check browser geolocation support
+      return {
+        granted: 'geolocation' in navigator,
+        canAskAgain: false,
+        status: 'geolocation' in navigator ? 'granted' : 'denied'
+      }
+    }
+
     try {
       const { status, canAskAgain } = await Location.getForegroundPermissionsAsync()
       
@@ -94,6 +133,42 @@ class LocationService {
    * Get the user's current location
    */
   async getCurrentLocation(highAccuracy: boolean = true): Promise<LocationCoordinates> {
+    if (Platform.OS === 'web' || !Location) {
+      // Web fallback - use browser geolocation API
+      return new Promise((resolve, reject) => {
+        if (!('geolocation' in navigator)) {
+          reject({
+            code: 'LOCATION_UNAVAILABLE',
+            message: 'Geolocation is not supported by this browser.'
+          } as LocationServiceError)
+          return
+        }
+
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const coordinates: LocationCoordinates = {
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude
+            }
+            this.currentLocation = coordinates
+            resolve(coordinates)
+          },
+          (error) => {
+            reject({
+              code: 'LOCATION_UNAVAILABLE',
+              message: 'Unable to retrieve your current location.',
+              details: error
+            } as LocationServiceError)
+          },
+          {
+            enableHighAccuracy: highAccuracy,
+            timeout: 10000,
+            maximumAge: 60000
+          }
+        )
+      })
+    }
+
     try {
       const permissions = await this.getLocationPermissionStatus()
       if (!permissions.granted) {
@@ -142,6 +217,36 @@ class LocationService {
     callback: (location: LocationCoordinates) => void,
     highAccuracy: boolean = false
   ): Promise<void> {
+    if (Platform.OS === 'web' || !Location) {
+      // Web fallback - use watchPosition if available
+      if ('geolocation' in navigator) {
+        this.watchId = navigator.geolocation.watchPosition(
+          (position) => {
+            const coordinates: LocationCoordinates = {
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude
+            }
+            this.currentLocation = coordinates
+            callback(coordinates)
+          },
+          (error) => {
+            console.error('Web geolocation error:', error)
+          },
+          {
+            enableHighAccuracy: highAccuracy,
+            timeout: 30000,
+            maximumAge: 50000
+          }
+        )
+      } else {
+        throw {
+          code: 'LOCATION_UNAVAILABLE',
+          message: 'Location tracking not available in this browser'
+        } as LocationServiceError
+      }
+      return
+    }
+
     try {
       const permissions = await this.getLocationPermissionStatus()
       if (!permissions.granted) {
@@ -187,7 +292,11 @@ class LocationService {
    */
   stopLocationTracking(): void {
     if (this.watchId) {
-      this.watchId.remove()
+      if (Platform.OS === 'web' && 'geolocation' in navigator) {
+        navigator.geolocation.clearWatch(this.watchId)
+      } else if (this.watchId.remove) {
+        this.watchId.remove()
+      }
       this.watchId = null
     }
   }
@@ -196,6 +305,13 @@ class LocationService {
    * Convert address string to coordinates (geocoding)
    */
   async geocodeAddress(address: string): Promise<GeocodeResult> {
+    if (Platform.OS === 'web' || !Location) {
+      throw {
+        code: 'GEOCODING_FAILED',
+        message: 'Geocoding not available on web platform. Please enter coordinates manually.'
+      } as LocationServiceError
+    }
+
     try {
       // Check cache first
       const cacheKey = address.toLowerCase().trim()
@@ -259,6 +375,15 @@ class LocationService {
    * Convert coordinates to address (reverse geocoding)
    */
   async reverseGeocode(coordinates: LocationCoordinates): Promise<GeocodeResult> {
+    if (Platform.OS === 'web' || !Location) {
+      // Web fallback - return basic coordinates-based result
+      return {
+        coordinates,
+        formatted_address: `${coordinates.latitude.toFixed(6)}, ${coordinates.longitude.toFixed(6)}`,
+        address_components: {}
+      }
+    }
+
     try {
       const results = await Location.reverseGeocodeAsync(coordinates)
       
@@ -339,7 +464,11 @@ class LocationService {
   /**
    * Helper method to format address from reverse geocoding result
    */
-  private formatAddress(result: Location.LocationGeocodedAddress): string {
+  private formatAddress(result: any): string {
+    if (!result) {
+      return 'Unknown location'
+    }
+
     const parts: string[] = []
     
     if (result.streetNumber && result.street) {
@@ -364,7 +493,7 @@ class LocationService {
       parts.push(result.country)
     }
     
-    return parts.join(', ')
+    return parts.length > 0 ? parts.join(', ') : 'Unknown location'
   }
 
   /**

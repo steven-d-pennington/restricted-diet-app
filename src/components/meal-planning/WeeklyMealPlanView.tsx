@@ -266,7 +266,7 @@ export const WeeklyMealPlanView: React.FC<WeeklyMealPlanViewProps> = ({
                 }}>
                   {new Date(day.date).getDate()}
                 </Text>
-                {day.totalCalories > 0 && (
+                {(day.totalCalories ?? 0) > 0 && (
                   <Text style={{
                     fontSize: 12,
                     color: '#374151',

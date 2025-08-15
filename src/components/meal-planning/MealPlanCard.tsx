@@ -228,8 +228,7 @@ export const MealPlanCard: React.FC<MealPlanCardProps> = ({
           {mealPlan.safety_level && (
             <SafetyBadge
               level={mealPlan.safety_level}
-              score={mealPlan.safety_score}
-              compact
+              size="small"
             />
           )}
         </View>

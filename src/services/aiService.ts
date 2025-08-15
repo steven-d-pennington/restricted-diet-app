@@ -338,13 +338,13 @@ class AIService {
 
   private selectOptimalProvider(taskType: string): 'openai' | 'anthropic' {
     // Select provider based on task type and availability
-    if (AI_CONFIG.openai.apiKey) {
+    if (AI_CONFIG.openai.apiKey && AI_CONFIG.openai.apiKey !== 'demo_key_for_development') {
       return 'openai'
-    } else if (AI_CONFIG.anthropic.apiKey) {
+    } else if (AI_CONFIG.anthropic.apiKey && AI_CONFIG.anthropic.apiKey !== 'demo_key_for_development') {
       return 'anthropic'
     }
     
-    throw new Error('No AI provider configured')
+    throw new Error('No AI provider configured with valid API keys')
   }
 
   private async callOpenAI(prompt: string): Promise<string> {

@@ -176,8 +176,7 @@ export const MealCard: React.FC<MealCardProps> = ({
             }}>
               <SafetyBadge
                 level={meal.safety_level}
-                score={meal.safety_score}
-                compact
+                size="small"
               />
             </View>
           )}
@@ -360,8 +359,7 @@ export const MealCard: React.FC<MealCardProps> = ({
           <View style={{ marginBottom: showQuickActions ? 16 : 0 }}>
             <SafetyBadge
               level={meal.safety_level}
-              score={meal.safety_score}
-              showScore
+              size="medium"
             />
           </View>
         )}

@@ -133,7 +133,7 @@ class SmartMealSuggestionService {
         time_of_day: new Date().toTimeString(),
         available_time: request.context.available_time,
         budget_limit: request.context.budget_limit,
-        social_context: request.context.social_context,
+        social_context: request.context.social_context as 'alone' | 'family' | 'friends' | 'date' | undefined,
         pantry_items: request.context.available_ingredients
       }
 
@@ -483,8 +483,8 @@ class SmartMealSuggestionService {
     const calories = mealData.calories_per_serving || 400
     
     return {
-      calorie_fit: calories < 300 ? 'under' : calories > 600 ? 'over' : 'perfect',
-      macro_balance: 'good',
+      calorie_fit: calories < 300 ? 'under' as const : calories > 600 ? 'over' as const : 'perfect' as const,
+      macro_balance: 'good' as const,
       dietary_goal_support: 0.8
     }
   }
